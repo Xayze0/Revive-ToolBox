@@ -32,7 +32,7 @@
          param (
                [string]$Title = ''
          )
-         cls
+         Clear-Host
             Write-Host "===================[ Revive ToolBox ]====================[v2.3.0]"
             Write-Host "    ____"
             Write-Host " .-'   / "
@@ -260,7 +260,7 @@ $arg3 = 'd=$n'
 #region[sbs]
 
 $sbSPXErrors = {
-    cls
+    Clear-Host  
     Write-Host "[ [Tool] Find SPX Errors in logs]" -ForegroundColor DarkCyan
     Write-Host "[....Collecting Log Files....]" -ForegroundColor Cyan
 
@@ -272,7 +272,7 @@ $sbSPXErrors = {
 }
 
 $sbCollectBackupSizes = {
-    cls
+    Clear-Host
     Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
 
     $files = Get-Spf -SearchBase (Pick-DriveLetter)
@@ -299,12 +299,12 @@ $sbCollectBackupSizes = {
                 }else {
                     $manyNames+= $Backup.Name.Split('_')[0]
                 }
-                $Drives = $manyNames | select -uniq
+                $Drives = $manyNames | Select-Object -uniq
 
             
             }
             foreach ($Drive in $Drives){
-                $ispswithF = Get-ChildItem $server.FullName | ? { ($_.Name -like "*_$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spf") -or ($_.Name -like "*_$Drive*_VOL*.spf") }
+                $ispswithF = Get-ChildItem $server.FullName | Where-Object { ($_.Name -like "*_$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spf") -or ($_.Name -like "*_$Drive*_VOL*.spf") }
 
                 $totalSizeGB = [Math]::Round((($ispswithF | Measure-Object -Sum Length).Sum / 1GB),2)
 
@@ -338,7 +338,7 @@ $sbCollectBackupSizes = {
 }
 
 $sbRemoveOldInc = {
-cls
+Clear-Host
 Write-Host "[ [Tool] Move unrequired INC to :\$(Get-Date -Format MM.dd.yyyy).]" -ForegroundColor DarkCyan
 $cmd = Find-ImagePath
 
