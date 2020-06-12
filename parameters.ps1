@@ -5,47 +5,14 @@
 #>
 
 @{
-    #-- default script parameters
-        LogPath="D:\beheer\logs"
-        LogDays=5 #-- Logs older dan x days will be removed
+    #-- Revive Image.exe Command Args
+        RVImageCmdArg1 = "qp"
+        RVImageCmdArg2 = 'd=$n'
+        
+        RVTools = [ordered]@{ RTCollectBackupSizes = "Collect Backup Sizes"; RTSPXErrors = "Find SPX Errors in logs"; RTRemoveOldInc = "Move unrequired .SPI Files" ; RTVerifyChain = "Verify Chains"}
 
-    #-- Syslog settings
-        SyslogServer="syslog.shire.lan" #-- syslog FQDN or IP address
+        Title = "Revive-ToolBoxx"
 
-    #-- disconnect viServer in exit-script function
-        DisconnectviServerOnExit=$true
-
-    #-- vSphere vCenter FQDN
-        vCenter="value" #-- vCenter FQDN
-
-    #-- settings for functino set-emailAlarmActions
-    emailAlarm=@{
-        CSVfile="VMware\alarmDefinitions.csv"
-        Profiles=@{
-            disabled=@{
-                disabled=$true
-                }
-            High=@{
-                disabled=$false
-                emailTo=@("operations@vdl.nl")
-                repeatMinutes=240 #-- 60 * 4 uur
-                emailSubject="[HIGH] NLDC01VS011 alarm notification"
-                }
-            Medium=@{
-                disabled=$false
-                emailTo=@("operations@vdl.nl")
-                repeatMinutes=1440 #-- 60 [min] * 24 [uur]
-                emailSubject="[MEDIUM] NLDC01VS011 alarm notification"
-                }
-            Low=@{
-                disabled=$false
-                emailTo=@("operations@vdl.nl")
-                repeatMinutes=0 #-- don't repeat
-                emailSubject="[LOW] NLDC01VS011 alar mnotification"
-                }
-            noEmail=@{
-                disabled=$false
-                }
-            }
-        }
+        Version = "3.0.0"
+                    
 }

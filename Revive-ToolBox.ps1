@@ -19,7 +19,6 @@
 [CmdletBinding()]
 Param(
     #-- Define Powershell input parameters (optional)
-    [string]$text
 )
 
 Begin{
@@ -42,6 +41,8 @@ Begin{
     } 
     $P = & $scriptpath\parameters.ps1
 
+
+
     #-- load functions
     if (Test-Path -IsValid -Path($scriptpath+"\functions\functions.psm1") ) {
         write-host "Loading functions" -ForegroundColor cyan
@@ -62,8 +63,35 @@ End{
     exit-script -finished_normal
 }
 
+
 Process{
 #-- note: area to write script code.....
     write-host "hello world"
+
+    do{
+        Show-Menu -Title $P.Title -Version $p.Version -RVTools $p.RVTools
+        $UserInput = Read-Host "Please make a selection"
+        #Can I make this a Dynamic Switch???
+        switch ($UserInput)
+        {
+                '1' {
+                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[0] -CommandType Function).ScriptBlock
+                    invoke-command -scriptblock $sb
+              } '2' {
+                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[1] -CommandType Function).ScriptBlock
+                    invoke-command -scriptblock $sb
+              } '3' {
+                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[2] -CommandType Function).ScriptBlock
+                    invoke-command -scriptblock $sb
+              } '4' {
+                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[3] -CommandType Function).ScriptBlock
+                    invoke-command -scriptblock $sb
+              } 'q' {
+                   return
+              }
+        }
+        Pause
+   }until ($UserInput -eq 'q')
+   
 }
 
