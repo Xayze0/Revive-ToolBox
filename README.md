@@ -1,10 +1,20 @@
-# Revive-ToolBox
-Powershell Revive Toolbox.
+# POSH-template
 
-Needed changes 
-Sort by i number
-Regex
+Powershell (POSH) scripting template
 
-Also binary search
+## General
 
-Also report status to user?
+| | |
+|---|---|
+|Name| Posh-template|
+|Version| 0.3|
+|License| [MIT license](License)|
+
+## CHANGE LOG
+
+| build| Change |
+|---|---|
+|0.3|Modulized functions|
+|0.2|First version |
+|0.1|Initial code|
+|0.0|Initial release|
