@@ -59,7 +59,7 @@ Function Find-ImagePath{
     return $CMD
 }
 
-Function Select-DriveLetter{
+Function Select-DriveLetter {
     #collect non a-c drives on the system and haves the end user pick one.
     $drives = Get-Volume | Where-Object {$_.DriveLetter -match '^[d-z]$'} | Sort-Object -Property DriveLetter
 
@@ -95,57 +95,73 @@ Function Select-DriveLetter{
 
 }
 
-Function Get-Spf{
+Function Get-RVFiles{
     [CmdletBinding()]
     param
     (
-        [ValidateNotNullOrEmpty()]
-        [System.String[]]$SearchBase
+        [System.String[]]$SearchBase,
 
+        [System.String[]]$Exclusions,
+        
+        [Parameter(Mandatory=$true,ParameterSetName="WithSPF")]
+        [Switch]
+        $SPF,
+
+        [parameter(Mandatory=$true,ParameterSetName="WithSPI")]
+        [Switch]
+        $SPI,
+
+        [Switch]
+        $Latest
 
     )
     PROCESS
     {
-        $files=@("*.spf")
-        Get-ChildItem -recurse ($SearchBase) -include ($files) -File | Where-Object { 
-                                                                                    ($_.Fullname -notlike "*Old Chains*") `
-                                                                                    -and 
-                                                                                    ($_.Fullname -notlike "*OldChains*") `
-                                                                                    -and
-                                                                                    ($_.Fullname -notlike "*spf.tmp*") `
-                                                                                    -and
-                                                                                    ($_.FullName -notlike "*bitmap*")
-                                                                                    }
+        if ($SPF){
+            $filter=@("*.spf")
+        }
+        if ($SPI){
+            $filter=@("*.spi")
+        }
+        if ($SearchBase){
+            $SearchBase = $SearchBase
+        }else{
+            $SearchBase = Select-DriveLetter
+        }
 
+        if ($Exclusions){
+            $WhereString = @()    
+            foreach ($Exclusion in $Exclusions) {
+                #Build the Where array                     
+                $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"        
+                $WhereString += "-and"                        
+                        
+            }
+            $WhereBlock = [scriptblock]::Create( $WhereString.Trim("-and") )
+            $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
+        }else{
+            $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File
+        }
+        
 
+        if ($Latest){
+            $highesti = 1
+            $highestFile = ""
+            foreach ($file in $files) {
+                #$file.Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","" 
+                $currenti = [int](($file.Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
+                if ($currenti -gt $highesti){
+                    $highestFile = $file
+
+                }
+            }
+            return $highestFile
+        }   
+        
+        return $files
     }
 }
 
-Function Get-Spi{
-    [CmdletBinding()]
-    param
-    (
-        [ValidateNotNullOrEmpty()]
-        [System.String[]]$SearchBase
-
-
-    )
-    PROCESS
-    {
-        $files=@("*.spi")
-        Get-ChildItem -recurse ($SearchBase) -include ($files) -File | Where-Object { 
-                                                                                    ($_.Fullname -notlike "*Old Chains*") `
-                                                                                    -and 
-                                                                                    ($_.Fullname -notlike "*OldChains*") `
-                                                                                    -and
-                                                                                    ($_.Fullname -notlike "*spf.tmp*") `
-                                                                                    -and
-                                                                                    ($_.FullName -notlike "*bitmap*")
-                                                                                    }
-
-
-    }
-}
 
 Function Remove-StringSpecialCharacter{
 <#
@@ -239,8 +255,7 @@ Function RTCollectBackupSizes  {
     Clear-Host
     Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
 
-    $files = Get-Spf -SearchBase (Select-DriveLetter)
-
+    $files = Get-RVFiles -SPF 
 
     $twoless = ($files[0]).FullName.Split('\').count - 3
 
@@ -265,8 +280,8 @@ Function RTCollectBackupSizes  {
                 }
                 $Drives = $manyNames | Select-Object -uniq
 
-            
             }
+
             foreach ($Drive in $Drives){
                 $ispswithF = Get-ChildItem $server.FullName | Where-Object { ($_.Name -like "*_$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spf") -or ($_.Name -like "*_$Drive*_VOL*.spf") }
 
@@ -277,13 +292,13 @@ Function RTCollectBackupSizes  {
 
                 foreach ($isp in ($ispswithF | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1)){
 
-                    $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1GB),2)
+                    $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1GB),2).ToString() + " GBs"
 
-                    if ($latestSize -eq 0){
-                        $latestSize = $isp.Length + " KB"
+                    if ($latestSize -eq "0 GBs"){
+                        $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1MB),2).ToString()  + " MB"
                     }
 
-                    $Statement = "|  " +$isp.LastWriteTime + " |  "+ [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1GB),2)+" GBs"
+                    $Statement = "|  " +$isp.LastWriteTime + " |  "+ $latestSize
                      Write-Host $Statement
 
                 }
@@ -302,13 +317,25 @@ Function RTCollectBackupSizes  {
 }
 
 Function RTRemoveOldInc {
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String]$RVImageCmdArg1,
+        [Parameter(Mandatory=$true)]
+        [String]$RVImageCmdArg3
+        
+
+
+    )
+
     Clear-Host
     Write-Host "[ [Tool] Move unrequired INC to :\$(Get-Date -Format MM.dd.yyyy).]" -ForegroundColor DarkCyan
     $cmd = Find-ImagePath
     
     
     #Collect SPF Files
-    $files = Get-Spf -SearchBase (Select-DriveLetter)
+    $files = Get-RVFiles -SPF
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     
     $percentEach1 = 100/$files.Count
@@ -323,59 +350,61 @@ Function RTRemoveOldInc {
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
         #collect all the spf files and find the latest one.
-        $latestSPI = Get-ChildItem $file.PSParentPath | Where-Object {$_.Name -like "*$volLetter*.spi" } |Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1
+        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest
+        
+
         $latestSPIPath = $latestSPI.FullName
             
         #run comand to get a list of files to keep.
-        $return = & $CMD $arg1 $latestSPIPath $arg3 
+        $return = & $CMD $RVImageCmdArg1 $latestSPIPath $RVImageCmdArg3 
     
-        #init var
-        $output = @()
-        
-    
-        #Cleanup output of command
-        Foreach ($line in $return){
-            if ($line -ne ""){
-                $clean = (Remove-StringSpecialCharacter -String $line -SpecialCharacterToKeep ':','.','"','_',' ','-','\').trim('"')
-                $output += ($clean.split('\')[$clean.split('\').count -1] ).Split('.')[0]
-            }
-        }
+        if ($return -ne $null){
+            #init var
+            $output = @()
             
-    
-        #make a folder for old items to go to
-        $folder =  $latestSPIPath[0]+":\"+(Get-Date -Format MM.dd.yyyy)
-        if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
-        
-        #make a log of SPF files found
-        $spfLogPath = $latestSPIPath[0]+":\"+(Get-Date -Format MM.dd.yyyy) + "\_DiscoveredspfLog.txt"
-        if (!(Test-Path -Path $spfLogPath)){ New-Item -ItemType File -Path $spfLogPath }
-        if (Test-Path -Path $spfLogPath){ $file.FullName | Out-File -FilePath $spfLogPath -Append }
-                                            
-            
-        #Itterate SPFs and move unneded items to the folder made above
-        $filesinVol = (Get-ChildItem $file.PSParentPath -Filter "*$volLetter*")
-    
-        for ($v = 0 ; $v -lt $filesinVol.count; $v++){
-            $item = $filesinVol[$v]
-    
-            $teststr = $item.Name.Split('.')[0]
-    
-            if ($output.Contains( $teststr)   ){
-                #Write-Host $item.FullName -ForegroundColor Green
-                    }else{
-                #Write-Host $item.FullName -ForegroundColor Red
-                $count = $item.fullname.split('\').count
-                $Destination = $item.fullname.Split('\')[0]+"\"+(Get-Date -Format MM.dd.yyyy)+"\"+$item.FullName.Split('\')[$count - 1]
-                Get-Item $item.FullName | Move-Item -Destination $Destination -Force
+            #Cleanup output of command
+            Foreach ($line in $return){
+                if ($line -ne ""){
+                    $clean = (Remove-StringSpecialCharacter -String $line -SpecialCharacterToKeep ':','.','"','_',' ','-','\').trim('"')
+                    $output += ($clean.split('\')[$clean.split('\').count -1] ).Split('.')[0]
+                }
             }
-    
-    
+                
+        
+            #make a folder for old items to go to
+            $folder =  $latestSPIPath[0]+":\"+(Get-Date -Format MM.dd.yyyy)
+            if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
+            
+            #make a log of SPF files found
+            $spfLogPath = $latestSPIPath[0]+":\"+(Get-Date -Format MM.dd.yyyy) + "\_DiscoveredspfLog.txt"
+            if (!(Test-Path -Path $spfLogPath)){ New-Item -ItemType File -Path $spfLogPath }
+            if (Test-Path -Path $spfLogPath){ $file.FullName | Out-File -FilePath $spfLogPath -Append }
+                                                
+                
+            #Itterate SPFs and move unneded items to the folder made above
+            $filesinVol = (Get-ChildItem $file.PSParentPath -Filter "*$volLetter*")
+        
+            for ($v = 0 ; $v -lt $filesinVol.count; $v++){
+                $item = $filesinVol[$v]
+        
+                $teststr = $item.Name.Split('.')[0]
+        
+                if (!($output.Contains($teststr))){
+                    #Move to new folder.
+                    $Destination = $item.FullName.Substring(0,2)+"\$(Get-Date -Format MM.dd.yyyy)\"+ $item.FullName.Substring(3)
+                    if (!(Test-Path ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\'))){
+                        New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\')
+                    }
+                    Move-Item -Path $item.FullName -Destination $Destination
+                }
+        
+            }
+
         }
-    
-    
+
     }
     
-    }
+}
 
 Function RTVerifyChain {
     Clear-Host  
@@ -383,8 +412,7 @@ Function RTVerifyChain {
     $cmd = Find-ImagePath
 
     #Collect SPF Files
-    $dl = (Select-DriveLetter)
-    $files = Get-Spf -SearchBase $dl
+    $files = Get-RVFiles -SPF 
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
 
 
@@ -399,6 +427,8 @@ Function RTVerifyChain {
         Write-Host $out -ForegroundColor Cyan
  
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
+
+        Get-RVFiles 
 
         #collect all the spf and spi files and sort by date modified oldest to newest
         $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } |Sort-Object -Property LastWriteTime
