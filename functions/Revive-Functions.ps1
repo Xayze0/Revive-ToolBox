@@ -319,15 +319,7 @@ Function RTCollectBackupSizes  {
 Function RTRemoveOldInc {
     [CmdletBinding()]
     param
-    (
-        [Parameter(Mandatory=$true)]
-        [String]$RVImageCmdArg1,
-        [Parameter(Mandatory=$true)]
-        [String]$RVImageCmdArg3
-        
-
-
-    )
+    ()
 
     Clear-Host
     Write-Host "[ [Tool] Move unrequired INC to :\$(Get-Date -Format MM.dd.yyyy).]" -ForegroundColor DarkCyan
@@ -335,8 +327,9 @@ Function RTRemoveOldInc {
     
     
     #Collect SPF Files
-    $files = Get-RVFiles -SPF
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
+    $files = Get-RVFiles -SPF
+    
     
     $percentEach1 = 100/$files.Count
     
@@ -352,12 +345,10 @@ Function RTRemoveOldInc {
         #collect all the spf files and find the latest one.
         $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest
         
-
-        $latestSPIPath = $latestSPI.FullName
-            
         #run comand to get a list of files to keep.
-        $return = & $CMD $RVImageCmdArg1 $latestSPIPath $RVImageCmdArg3 
+        $return = & $CMD $p.RVImageCmdArg1 $latestSPI.FullName $p.RVImageCmdArg3
     
+        #Test to see if if there is a return a null return mean bad test
         if ($return -ne $null){
             #init var
             $output = @()
@@ -372,15 +363,9 @@ Function RTRemoveOldInc {
                 
         
             #make a folder for old items to go to
-            $folder =  $latestSPIPath[0]+":\"+(Get-Date -Format MM.dd.yyyy)
+            $folder =  $LatestSPI.PSParentPath +"\"+(Get-Date -Format MM.dd.yyyy)
             if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
             
-            #make a log of SPF files found
-            $spfLogPath = $latestSPIPath[0]+":\"+(Get-Date -Format MM.dd.yyyy) + "\_DiscoveredspfLog.txt"
-            if (!(Test-Path -Path $spfLogPath)){ New-Item -ItemType File -Path $spfLogPath }
-            if (Test-Path -Path $spfLogPath){ $file.FullName | Out-File -FilePath $spfLogPath -Append }
-                                                
-                
             #Itterate SPFs and move unneded items to the folder made above
             $filesinVol = (Get-ChildItem $file.PSParentPath -Filter "*$volLetter*")
         
@@ -388,10 +373,12 @@ Function RTRemoveOldInc {
                 $item = $filesinVol[$v]
         
                 $teststr = $item.Name.Split('.')[0]
-        
+                
+                #If our test file is not in the required list
                 if (!($output.Contains($teststr))){
                     #Move to new folder.
                     $Destination = $item.FullName.Substring(0,2)+"\$(Get-Date -Format MM.dd.yyyy)\"+ $item.FullName.Substring(3)
+                    Write-Host $Destination
                     if (!(Test-Path ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\'))){
                         New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\')
                     }
@@ -409,15 +396,12 @@ Function RTRemoveOldInc {
 Function RTVerifyChain {
     Clear-Host  
     Write-Host "[ [Tool] Verify Chains ]" -ForegroundColor DarkCyan
-    $cmd = Find-ImagePath
+    
 
     #Collect SPF Files
-    $files = Get-RVFiles -SPF 
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
-
-
-
-
+    $files = Get-RVFiles -SPF 
+    
     #Itterate SPF Files
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
@@ -428,10 +412,26 @@ Function RTVerifyChain {
  
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
 
-        Get-RVFiles 
-
         #collect all the spf and spi files and sort by date modified oldest to newest
         $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } |Sort-Object -Property LastWriteTime
+
+        ### Start-MultiThread.ps1 ###
+        #Start all jobs
+        ForEach($target in $vcTargets.Name){
+            Start-Job -ScriptBlock {& $args[0] $args[1] $args[2] $args[3]
+            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$latestSPI.FullName,$p.RVImageCmdArg3 
+        }
+        
+        ### FIND ME
+        #its not so bad, as i think i can edit the return and include the testing as part of this job op. then return a dictionary of SPI i number and true false.
+        #then order the list and fin the time before the first failure.
+        
+
+        #Wait for all jobs
+        Get-Job | Wait-Job
+        
+        #Get all job results
+        $varr = Get-Job | Receive-Job 
     
         #test Latest SPF, because if the latest spf is good, the whole chain is good, also i suspect this is the most common result, so testing this first saves time.
         $k = $vcTargets.Count - 1

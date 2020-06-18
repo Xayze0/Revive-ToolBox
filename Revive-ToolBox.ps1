@@ -66,7 +66,7 @@ End{
 
 Process{
 #-- note: area to write script code.....
-    write-host "hello world"
+    $cmd = Find-ImagePath
 
     do{
         Show-Menu -Title $P.Title -Version $p.Version -RVTools $p.RVTools
