@@ -1,11 +1,11 @@
 ﻿<#
-.SYNOPSIS
+SYNOPSIS
    Collection Of Tools For Revive Managment Tasks
-.DESCRIPTION
+DESCRIPTION
    Script usage description [optional]
-.EXAMPLE
+EXAMPLE
     One or more examples for how to use this script
-.NOTES
+NOTES
     File Name          : <filename>.ps1
     Author             : <Script Author>
     Prerequisite       : <Preruiqisites like
