@@ -425,17 +425,22 @@ Function RTVerifyChain {
         ForEach($target in $vcTargets){
             #<#
             Start-Job -ScriptBlock {
-                $imageReturn = &  $args[0] $args[1] $args[2] $args[3]
+                $path = $args[2].FullName
+                $imageReturn = & $args[0] $args[1] $path $args[3]
+                
                 if ($imageReturn -ne $null){
                     [int]$imageReturnTF = 1
                 }else {
                     [int]$imageReturnTF = 0
                 }
+
                 if ($args[2].Name -like "*.spf*"){
                     $currenti = 0
                 }else{
                     $currenti = [int](($args[2].Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
                 }
+
+
                 $pso = New-Object psobject -Property    @{  'FileName'=$args[2].Name;
                                                             'FileNameLength'=$args[2].Name.length;
                                                             'TF'=$imageReturnTF;
