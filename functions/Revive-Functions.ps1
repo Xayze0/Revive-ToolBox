@@ -428,7 +428,7 @@ Function RTVerifyChain {
             #<#
             Write-Host "STarting Job" -ForegroundColor Cyan
             Start-Job -ScriptBlock {
-                $imageReturn = . $args[0] $args[1] $args[4] $args[3]
+                $imageReturn = & $using:CMD $args[1] $args[4] $args[3]
                 
                 if ($imageReturn -ne $null){
                     [int]$imageReturnTF = 0
@@ -479,28 +479,27 @@ Function RTVerifyChain {
         if (!($DataSet.TF.Contains(1))){
             #Whole Chain is good
             Write-Host "     [Chain Good]" -ForegroundColor Green
-        }elseif ($DataSet.TF[0] -eq 1){
-            Write-Host "     [Chain Unusable]" -ForegroundColor Red
-
-        }else{
-            #Order Dataset by 
-            $DSIndex = $DataSet.TF.IndexOf(1)
-            $vcmsg = $DataSet[$DSIndex].FileName
-            Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow   
+        }
+        else{
+            if ($DataSet.TF[0] -eq 1){
+                Write-Host "     [Chain Unusable]" -ForegroundColor Red
+    
+            }else{
+                #Order Dataset by 
+                $DSIndex = $DataSet.TF.IndexOf(1)
+                $vcmsg = $DataSet[$DSIndex].FileName
+                Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow   
+    
+            }
 
         }
-
-
-        
-
-      
 
     }
 
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
 
-    $uSPINames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N=’Name’; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
-    $uSPFnames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N=’Name’; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
+    $uSPINames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+    $uSPFnames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
 
     foreach ($SPIName in $uSPINames){
         if ($uSPFnames.Name -contains $SPIName.Name){
