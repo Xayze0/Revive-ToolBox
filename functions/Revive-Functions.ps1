@@ -428,7 +428,7 @@ Function RTVerifyChain {
             #<#
             Write-Host "STarting Job" -ForegroundColor Cyan
             Start-Job -ScriptBlock {
-                $imageReturn = & $args[0] $args[1] $args[4] $args[3]
+                $imageReturn = . $args[0] $args[1] $args[4] $args[3]
                 
                 if ($imageReturn -ne $null){
                     [int]$imageReturnTF = 0
