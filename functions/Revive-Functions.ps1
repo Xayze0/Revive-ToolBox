@@ -403,7 +403,7 @@ Function RTVerifyChain {
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF 
 
-    $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
+    
 
     
     #Itterate SPF Files 
@@ -414,7 +414,7 @@ Function RTVerifyChain {
         $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
         Write-Host $out -ForegroundColor Cyan
  
-        
+        $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
         
 
         #collect all the spf and spi files and sort by date modified oldest to newest
@@ -485,8 +485,8 @@ Function RTVerifyChain {
 
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
 
-    $uSPINames = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N=’Name’; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
-    $uSPFnames = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N=’Name’; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
+    $uSPINames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N=’Name’; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+    $uSPFnames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N=’Name’; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
 
     foreach ($SPIName in $uSPINames){
         if ($uSPFnames.Name -contains $SPIName.Name){

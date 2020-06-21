@@ -1,7 +1,7 @@
-﻿# Script Parameters for <scriptname>.ps1
+﻿# Script Parameters for scriptname.ps1
 <#
-    Author             : <Script Author>
-    Last Edit          : <Initials> - <date>
+    Author             : Script Author
+    Last Edit          : Initials - date
 #>
 
 @{
