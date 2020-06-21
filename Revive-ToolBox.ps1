@@ -66,7 +66,7 @@ End{
 
 Process{
 #-- note: area to write script code.....
-    $cmd = Find-ImagePath
+    $CMD = Find-ImagePath
 
     do{
         Show-Menu -Title $P.Title -Version $p.Version -RVTools $p.RVTools
@@ -94,4 +94,4 @@ Process{
    }until ($UserInput -eq 'q')
    
 }
-
+###

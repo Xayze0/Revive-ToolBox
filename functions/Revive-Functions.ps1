@@ -114,6 +114,7 @@ Function Get-RVFiles{
         [Switch]
         $Latest
 
+
     )
     PROCESS
     {
@@ -401,8 +402,11 @@ Function RTVerifyChain {
     #Collect SPF Files
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF 
+
+    $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
+
     
-    #Itterate SPF Files
+    #Itterate SPF Files 
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
 
@@ -410,16 +414,38 @@ Function RTVerifyChain {
         $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
         Write-Host $out -ForegroundColor Cyan
  
-        $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
+        
+        
 
         #collect all the spf and spi files and sort by date modified oldest to newest
-        $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } |Sort-Object -Property LastWriteTime
+        $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
         ### Start-MultiThread.ps1 ###
         #Start all jobs
-        ForEach($target in $vcTargets.Name){
-            Start-Job -ScriptBlock {& $args[0] $args[1] $args[2] $args[3]
-            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$latestSPI.FullName,$p.RVImageCmdArg3 
+        ForEach($target in $vcTargets){
+            #<#
+            Start-Job -ScriptBlock {
+                $imageReturn = &  $args[0] $args[1] $args[2] $args[3]
+                if ($imageReturn -ne $null){
+                    [int]$imageReturnTF = 1
+                }else {
+                    [int]$imageReturnTF = 0
+                }
+                if ($args[2].Name -like "*.spf*"){
+                    $currenti = 0
+                }else{
+                    $currenti = [int](($args[2].Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
+                }
+                $pso = New-Object psobject -Property    @{  'FileName'=$args[2].Name;
+                                                            'FileNameLength'=$args[2].Name.length;
+                                                            'TF'=$imageReturnTF;
+                                                            'currenti'=$currenti;
+                                                        }
+                return $pso
+
+
+            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target,$p.RVImageCmdArg3 
+            #>
         }
         
         ### FIND ME
@@ -429,62 +455,45 @@ Function RTVerifyChain {
 
         #Wait for all jobs
         Get-Job | Wait-Job
+        $DataSet = @()
         
         #Get all job results
-        $varr = Get-Job | Receive-Job 
-    
-        #test Latest SPF, because if the latest spf is good, the whole chain is good, also i suspect this is the most common result, so testing this first saves time.
-        $k = $vcTargets.Count - 1
-        $vcTarget = $vcTargets[$k]
-        $return = & $CMD $arg1 $vcTarget.FullName $arg3  
+        $DataSet += Get-Job  | Receive-Job -Keep 
 
-        #We know the chain is bad if the return in Null, if we get anythin the chain is good, just how the image.exe command returns good or bad chains.
-        if ($return -ne $null){
+        #If all files return some string then the image is good.
+        if (!($DataSet.TF.Contains(1))){
+            #Whole Chain is good
             Write-Host "     [Chain Good]" -ForegroundColor Green
-        }
-        else{
-            #Next we check the oldest file and if it returns null, we know the whole chain is bad. Also i suspect the 2nd most likley outcome.
-            $vcTarget = $vcTargets[0]
-            $return = & $CMD $arg1 $vcTarget.FullName $arg3
+        }elseif ($DataSet.TF[0] -eq 1){
+            Write-Host "     [Chain Unusable]" -ForegroundColor Red
 
-            if ($return -ne $null){
-                #Finally is the latest file is bad and the oldest is good we itterate files till we find a failure. and output the last known good file.
-                $vcStatusGood = $true
-                for ($j = 0 ; ($vcStatusGood -eq $true) -and ($j -le $vcTargets.Count) ; $j++){
-                    $vcTarget = $vcTargets[$j]
-                    $return = & $CMD $arg1 $vcTarget.FullName $arg3  
-                    #Write-Host $return
-                    if ($return -eq $null){
-                        $vcStatusGood = $false
-                        $l = $j - 1
-                        $vcmsg = $vcTargets[$l]
-                        Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow
-                    }
-                }
-
-            
-            }else{
-                Write-Host "     [Chain Unusable]" -ForegroundColor Red
-
-            }
-            
+        }else{
+            #Order Dataset by 
+            $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
+            $DSIndex = $DataSet.TF.IndexOf(1)
+            $vcmsg = $DataSet[$DSIndex].FileName
+            Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow   
 
         }
 
+
+        
+
+      
 
     }
 
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
 
-    $uSPFnames = Get-Spf $dl | Select-Object @{N=’Name’; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
-    $uSPINames = Get-Spi $dl | Select-Object @{N=’Name’; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+    $uSPINames = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N=’Name’; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+    $uSPFnames = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N=’Name’; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
 
     foreach ($SPIName in $uSPINames){
         if ($uSPFnames.Name -contains $SPIName.Name){
             #
         }
         else{
-            $missingFile = Get-ChildItem -Path $dl -Recurse | Where-Object {$_.Name -like "*$($SPIName.Name)*.spi*"} | Select-Object -First 1
+            $missingFile = Get-ChildItem $file.PSParentPath | Where-Object {$_.Name -like "*$($SPIName.Name)*.spi*"} | Select-Object -First 1
             [void]$SPIsMissingSPFs.Add($missingFile.FullName)
         }
 
