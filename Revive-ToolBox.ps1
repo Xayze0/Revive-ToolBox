@@ -6,14 +6,14 @@ DESCRIPTION
 EXAMPLE
     One or more examples for how to use this script
 NOTES
-    File Name          : <filename>.ps1
-    Author             : <Script Author>
-    Prerequisite       : <Preruiqisites like
+    File Name          : filename.ps1
+    Author             : Script Author
+    Prerequisite       : Preruiqisites like
                          Min. PowerShell version : 2.0
                          PS Modules and version : 
                             PowerCLI - 6.0 R2
-    Version/GIT Tag    : <GIT tag>
-    Last Edit          : <Initials> - <date>
+    Version/GIT Tag    : GIT tag
+    Last Edit          : Initials - date
 
 #>
 [CmdletBinding()]
