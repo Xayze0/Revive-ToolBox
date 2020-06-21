@@ -425,31 +425,31 @@ Function RTVerifyChain {
         ForEach($target in $vcTargets){
             #<#
             Start-Job -ScriptBlock {
-                $path = $args[2].FullName
-                $imageReturn = & $args[0] $args[1] $path $args[3]
+                $imageReturn = & $args[0] $args[1] $args[4] $args[3]
                 
                 if ($imageReturn -ne $null){
-                    [int]$imageReturnTF = 1
-                }else {
                     [int]$imageReturnTF = 0
+                }else {
+                    [int]$imageReturnTF = 1
                 }
 
-                if ($args[2].Name -like "*.spf*"){
+                if ($args[2] -like "*.spf*"){
                     $currenti = 0
                 }else{
-                    $currenti = [int](($args[2].Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
+                    $currenti = [int](($args[2] -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
                 }
 
 
-                $pso = New-Object psobject -Property    @{  'FileName'=$args[2].Name;
-                                                            'FileNameLength'=$args[2].Name.length;
+                $pso = New-Object psobject -Property    @{  'FileName'=$args[2];
+                                                            'FileNameLength'=$args[2].length;
                                                             'TF'=$imageReturnTF;
                                                             'currenti'=$currenti;
+                                                            'return'=$imageReturn;
                                                         }
                 return $pso
 
 
-            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target,$p.RVImageCmdArg3 
+            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target.Name,$p.RVImageCmdArg3,$target.FullName
             #>
         }
         
@@ -463,7 +463,12 @@ Function RTVerifyChain {
         $DataSet = @()
         
         #Get all job results
-        $DataSet += Get-Job  | Receive-Job -Keep 
+        $DataSet += Get-Job  | Receive-Job -Keep
+        Get-Job | Remove-Job
+
+        #Order Dataset
+        $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
+        
 
         #If all files return some string then the image is good.
         if (!($DataSet.TF.Contains(1))){
@@ -474,7 +479,6 @@ Function RTVerifyChain {
 
         }else{
             #Order Dataset by 
-            $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
             $DSIndex = $DataSet.TF.IndexOf(1)
             $vcmsg = $DataSet[$DSIndex].FileName
             Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow   
