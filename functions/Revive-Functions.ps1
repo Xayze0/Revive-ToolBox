@@ -420,10 +420,13 @@ Function RTVerifyChain {
         #collect all the spf and spi files and sort by date modified oldest to newest
         $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
+        Write-Host "Start DataSet collection" -ForegroundColor Cyan
+
         ### Start-MultiThread.ps1 ###
         #Start all jobs
         ForEach($target in $vcTargets){
             #<#
+            Write-Host "STarting Job" -ForegroundColor Cyan
             Start-Job -ScriptBlock {
                 $imageReturn = & $args[0] $args[1] $args[4] $args[3]
                 
@@ -463,12 +466,14 @@ Function RTVerifyChain {
         $DataSet = @()
         
         #Get all job results
+        Write-Host "Fetching Job" -ForegroundColor Cyan
         $DataSet += Get-Job  | Receive-Job -Keep
         Get-Job | Remove-Job
 
         #Order Dataset
         $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
         
+        Write-Host "Have DataSet" -ForegroundColor Cyan
 
         #If all files return some string then the image is good.
         if (!($DataSet.TF.Contains(1))){
