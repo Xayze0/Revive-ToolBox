@@ -250,72 +250,78 @@ Function RTSPXErrors{
 }
 
 Function RTCollectBackupSizes  {
-    Clear-Host
-    Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
- 
+    [CmdletBinding()]
+    param
+    (
+        [string[]]
+        $Exclusions
 
-    $files = Get-RVFiles -SPF -Exclusions $p.Exclusions
-    Write-Host "Mark 1" -ForegroundColor Cyan
-    Write-Host $p.Exclusions -ForegroundColor Cyan
+
+    )
+    PROCESS
+    {
+        Clear-Host
+        Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
     
-   
 
-    $twoless = ($files[0]).FullName.Split('\').count - 3
+        $files = Get-RVFiles -SPF -Exclusions $P.Exclusions
+        #what if 0 files??
 
-    $serverspath = (($files[0]).FullName.Split('\')[0..$twoless]) -join '\'
+        $serverspath = $files[0] | Split-Path -Parent | Split-Path -Parent 
 
-    $Servers = Get-ChildItem -Path $serverspath
 
-    foreach ($Server in $Servers){
-        Write-Host "  "
-        Write-Host "  "
-        Write-Host "---$server------------------------------" -ForegroundColor Green
-    
-        $Backups = Get-ChildItem $Server.FullName | Where-Object {!($_.PSIsContainer)}
+        $Servers = Get-ChildItem -Path $serverspath
 
-            $manyNames = @()
+        foreach ($Server in $Servers){
+            Write-Host "  "
+            Write-Host "  "
+            Write-Host "---$server------------------------------" -ForegroundColor Green
+        
+            $Backups = Get-ChildItem $Server.FullName | Where-Object {!($_.PSIsContainer)}
 
-            foreach ($Backup in $Backups){
-                if ($Backup.Name.Split('_')[1].length -eq 1){
-                    $manyNames+= $Backup.Name.Split('_')[1]
-                }else {
-                    $manyNames+= $Backup.Name.Split('_')[0]
+                $manyNames = @()
+
+                foreach ($Backup in $Backups){
+                    if ($Backup.Name.Split('_')[1].length -eq 1){
+                        $manyNames+= $Backup.Name.Split('_')[1]
+                    }else {
+                        $manyNames+= $Backup.Name.Split('_')[0]
+                    }
+                    $Drives = $manyNames | Select-Object -uniq
+
                 }
-                $Drives = $manyNames | Select-Object -uniq
 
-            }
+                foreach ($Drive in $Drives){
+                    $ispswithF = Get-ChildItem $server.FullName | Where-Object { ($_.Name -like "*_$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spf") -or ($_.Name -like "*_$Drive*_VOL*.spf") }
 
-            foreach ($Drive in $Drives){
-                $ispswithF = Get-ChildItem $server.FullName | Where-Object { ($_.Name -like "*_$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spi") -or ($_.Name -like "$Drive*_VOL*.spf") -or ($_.Name -like "*_$Drive*_VOL*.spf") }
+                    $totalSizeGB = [Math]::Round((($ispswithF | Measure-Object -Sum Length).Sum / 1GB),2)
 
-                $totalSizeGB = [Math]::Round((($ispswithF | Measure-Object -Sum Length).Sum / 1GB),2)
+                    Write-Host "  "
+                    Write-Host "|$Drive :"
 
-                Write-Host "  "
-                Write-Host "|$Drive :"
+                    foreach ($isp in ($ispswithF | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1)){
 
-                foreach ($isp in ($ispswithF | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1)){
+                        $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1GB),2).ToString() + " GBs"
 
-                    $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1GB),2).ToString() + " GBs"
+                        if ($latestSize -eq "0 GBs"){
+                            $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1MB),2).ToString()  + " MB"
+                        }
 
-                    if ($latestSize -eq "0 GBs"){
-                        $latestSize = [Math]::Round((($isp | Measure-Object -Sum Length).Sum / 1MB),2).ToString()  + " MB"
+                        $Statement = "|  " +$isp.LastWriteTime + " |  "+ $latestSize
+                        Write-Host $Statement
+
                     }
 
-                    $Statement = "|  " +$isp.LastWriteTime + " |  "+ $latestSize
-                     Write-Host $Statement
 
+
+
+
+                    Write-Host "|$Drive : All Backups $totalSizeGB GBs"
                 }
-
-
-
-
-
-                Write-Host "|$Drive : All Backups $totalSizeGB GBs"
-            }
-        
+            Write-Host "[....Complete....]" -ForegroundColor Green
+            
+        }
     }
-
-    Write-Host "[....Complete....]" -ForegroundColor Green
 
 }
 
