@@ -264,7 +264,7 @@ Function RTCollectBackupSizes  {
         Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
     
 
-        $files = Get-RVFiles -SPF -Exclusions $P.Exclusions
+        $files = Get-RVFiles -SPF -Exclusions $Exclusions
         #what if 0 files??
 
         $serverspath = $files[0] | Split-Path -Parent | Split-Path -Parent 

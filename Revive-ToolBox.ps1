@@ -75,17 +75,13 @@ Process{
         switch ($UserInput)
         {
                 '1' {
-                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[0] -CommandType Function).ScriptBlock
-                    invoke-command -scriptblock $sb
+                    RTCollectBackupSizes -Exclusions $p.Exclusions
               } '2' {
-                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[1] -CommandType Function).ScriptBlock
-                    invoke-command -scriptblock $sb
+                    RTSPXErrors 
               } '3' {
-                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[2] -CommandType Function).ScriptBlock
-                    invoke-command -scriptblock $sb
+                    RTRemoveOldInc
               } '4' {
-                    $sb = (get-command $p.RVTools.Keys.Split([Environment]::NewLine)[3] -CommandType Function).ScriptBlock
-                    invoke-command -scriptblock $sb
+                    RTVerifyChain
               } 'q' {
                    return
               }
