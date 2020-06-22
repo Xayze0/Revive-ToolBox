@@ -252,9 +252,13 @@ Function RTSPXErrors{
 Function RTCollectBackupSizes  {
     Clear-Host
     Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
+ 
 
-    Write-Host "Mark 1" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF -Exclusions $p.Exclusions
+    Write-Host "Mark 1" -ForegroundColor Cyan
+    Write-Host $p.Exclusions -ForegroundColor Cyan
+    
+   
 
     $twoless = ($files[0]).FullName.Split('\').count - 3
 
