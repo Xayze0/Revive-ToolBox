@@ -100,8 +100,6 @@ Function Get-RVFiles{
     param
     (
         [System.String[]]$SearchBase,
-
-        [System.String[]]$Exclusions,
         
         [Parameter(Mandatory=$true,ParameterSetName="WithSPF")]
         [Switch]
@@ -130,20 +128,17 @@ Function Get-RVFiles{
             $SearchBase = Select-DriveLetter
         }
 
-        if ($Exclusions){
-            $WhereString = @()    
-            foreach ($Exclusion in $Exclusions) {
-                #Build the Where array                     
-                $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"        
-                $WhereString += "-and"                        
-                        
-            }
-            $WhereBlock = [scriptblock]::Create( $WhereString.Trim("-and") )
-            $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
-        }else{
-            $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File
+        $WhereString = @()    
+        foreach ($Exclusion in $p.Exclusions) {
+            #Build the Where array                     
+            $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"        
+            $WhereString += "-and"                        
+                    
         }
-        
+        $WhereBlock = [scriptblock]::Create( $WhereString[0..($WhereString.Length - 2)] )
+        $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
+    
+    
 
         if ($Latest){
             $highesti = 1
@@ -162,7 +157,6 @@ Function Get-RVFiles{
         return $files
     }
 }
-
 
 Function Remove-StringSpecialCharacter{
 <#
@@ -412,21 +406,20 @@ Function RTVerifyChain {
 
         #Generate Line Item Output
         $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
+        
         Write-Host $out -ForegroundColor Cyan
- 
+
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
         
 
         #collect all the spf and spi files and sort by date modified oldest to newest
         $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
-        Write-Host "Start DataSet collection" -ForegroundColor Cyan
-
+       
         ### Start-MultiThread.ps1 ###
         #Start all jobs
         ForEach($target in $vcTargets){
             #<#
-            Write-Host "STarting Job" -ForegroundColor Cyan
             Start-Job -ScriptBlock {
                 $imageReturn = & $using:CMD $args[1] $args[4] $args[3]
                 
@@ -452,7 +445,7 @@ Function RTVerifyChain {
                 return $pso
 
 
-            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target.Name,$p.RVImageCmdArg3,$target.FullName
+            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target.Name,$p.RVImageCmdArg3,$target.FullName | Out-Null
             #>
         }
         
@@ -462,37 +455,51 @@ Function RTVerifyChain {
         
 
         #Wait for all jobs
-        Get-Job | Wait-Job
+        Get-Job | Wait-Job | Out-Null
         $DataSet = @()
         
         #Get all job results
-        Write-Host "Fetching Job" -ForegroundColor Cyan
         $DataSet += Get-Job  | Receive-Job -Keep
         Get-Job | Remove-Job
 
         #Order Dataset
         $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
         
-        Write-Host "Have DataSet" -ForegroundColor Cyan
 
-        #If all files return some string then the image is good.
-        if (!($DataSet.TF.Contains(1))){
-            #Whole Chain is good
-            Write-Host "     [Chain Good]" -ForegroundColor Green
+        
+        if ($DataSet.Count -eq 1){
+            #If DataSet is only 1 item
+            if ($DataSet.TF -eq 0){
+                #Whole Chain is good
+                Write-Host "     [Chain Good]" -ForegroundColor Green
+            }else{
+                Write-Host "     [Chain Unusable]" -ForegroundColor Red
+            }
         }
         else{
-            if ($DataSet.TF[0] -eq 1){
-                Write-Host "     [Chain Unusable]" -ForegroundColor Red
-    
-            }else{
-                #Order Dataset by 
-                $DSIndex = $DataSet.TF.IndexOf(1)
-                $vcmsg = $DataSet[$DSIndex].FileName
-                Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow   
-    
+            ##If More than 1 DataSet is Returned
+            if (!($DataSet.TF.Contains(1))){
+                #Whole Chain is good
+                Write-Host "     [Chain Good]" -ForegroundColor Green
             }
+            else{
+                if ($DataSet.TF[0] -eq 1){
+                    Write-Host "     [Chain Unusable]" -ForegroundColor Red
+        
+                }else{
+                    #Order Dataset by 
+                    $DSIndex = $DataSet.TF.IndexOf(1)
+                    $vcmsg = $DataSet[$DSIndex].FileName
+                    Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow
+        
+                }
 
+            }
         }
+        
+
+
+        
 
     }
 
@@ -513,10 +520,10 @@ Function RTVerifyChain {
     }
 
     if ($SPIsMissingSPFs.Count -ne 0){
-        Write-Host "[Found the following .SPI Chains with no matching .SPF]" -ForegroundColor Yellow
+        Write-Host "[Found the following .SPI Chains with no matching .SPF]" -ForegroundColor DarkMagenta
         foreach ($spi in $SPIsMissingSPFs){
             $out = "[" + $spi.Split('\')[ $spi.Split('\').COUNT - 3 ] + " \ " + $spi.Split('\')[ $spi.Split('\').COUNT - 2 ]+ " \ " +($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).Substring(0,($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).IndexOf('-i')+5)+"]" 
-            Write-Host $out -ForegroundColor yellow
+            Write-Host $out -ForegroundColor DarkMagenta
         }
     }
 
