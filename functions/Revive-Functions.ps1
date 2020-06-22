@@ -137,7 +137,7 @@ Function Get-RVFiles{
         }
         $WhereBlock = [scriptblock]::Create( $WhereString[0..($WhereString.Length - 2)] )
         $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
-    
+        $files
     
 
         if ($Latest){
@@ -250,6 +250,7 @@ Function RTCollectBackupSizes  {
     Clear-Host
     Write-Host "[ [Tool] Collect Backup Sizes]" -ForegroundColor DarkCyan
 
+    Write-Host "Mark 1" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF 
 
     $twoless = ($files[0]).FullName.Split('\').count - 3
