@@ -60,7 +60,7 @@ Begin{
 
 End{
     #-- we made it, exit script.
-    #exit-script -finished_normal
+    exit-script -finished_normal
 }
 
 
