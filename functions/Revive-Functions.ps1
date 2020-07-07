@@ -142,7 +142,7 @@ Function Get-RVFiles{
         }
 
         if ($VOLLetter){
-            += "(`$_.FullName -like '*$VOLLetter*')"
+            $WhereString += "(`$_.FullName -like '*$VOLLetter*')"
         }
 
         $WhereString = $WhereString -Join " -and " 
