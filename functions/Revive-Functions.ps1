@@ -131,15 +131,15 @@ Function Get-RVFiles{
             $SearchBase = Select-DriveLetter
         }
 
-        $WhereString = @()    
+        $WhereString = @()   
         foreach ($Exclusion in $Exclusions) {
             #Build the Where array                     
             $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"        
             $WhereString += "-and"                        
                     
         }
-        $WhereBlock = [scriptblock]::Create( $WhereString[0..($WhereString.Length - 2)] )
-        $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
+        $WhereBlock = [scriptblock]::Create( $WhereString[0..($WhereString.Length - 2)])
+        $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object $WhereBlock
         
     
 
@@ -255,8 +255,6 @@ Function RTCollectBackupSizes  {
     (
         [string[]]
         $Exclusions
-
-
     )
     PROCESS
     {
@@ -328,7 +326,10 @@ Function RTCollectBackupSizes  {
 Function RTRemoveOldInc {
     [CmdletBinding()]
     param
-    ()
+    (
+        [string[]]
+        $Exclusions
+    )
 
     Clear-Host
     Write-Host "[ [Tool] Move unrequired INC to :\$(Get-Date -Format MM.dd.yyyy).]" -ForegroundColor DarkCyan
@@ -413,7 +414,6 @@ Function RTVerifyChain {
 
     $CMD = Find-ImagePath
 
-    
     #Itterate SPF Files 
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
