@@ -79,7 +79,7 @@ Process{
               } '2' {
                     RTSPXErrors 
               } '3' {
-                    RTRemoveOldInc
+                    RTRemoveOldInc -Exclusions $p.Exclusions
               } '4' {
                     RTVerifyChain
               } 'q' {
