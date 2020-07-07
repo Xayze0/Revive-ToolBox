@@ -338,7 +338,7 @@ Function RTRemoveOldInc {
     
     #Collect SPF Files
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
-    $files = Get-RVFiles -SPF
+    $files = Get-RVFiles -SPF -Exclusions $Exclusions
     
     
     $percentEach1 = 100/$files.Count
