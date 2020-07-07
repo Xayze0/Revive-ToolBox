@@ -273,7 +273,7 @@ Function RTCollectBackupSizes  {
         $files = Get-RVFiles -SPF -Exclusions $Exclusions
         #what if 0 files??
 
-        $serverspath = $files | Split-Path -Parent | Split-Path -Parent
+        $serverspath = ($files[0].FullName).Split('\')[0..(($files[0].FullName).Split('\').Count -3)] -join '\'
 
 
         $Servers = Get-ChildItem -Path $serverspath
