@@ -387,7 +387,6 @@ Function RTRemoveOldInc {
                 if (!($output.Contains($teststr))){
                     #Move to new folder.
                     $Destination = $item.FullName.Substring(0,2)+"\$(Get-Date -Format MM.dd.yyyy)\"+ $item.FullName.Substring(3)
-                    Write-Host $Destination
                     if (!(Test-Path ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\'))){
                         New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\')
                     }
