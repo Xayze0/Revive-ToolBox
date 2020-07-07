@@ -391,7 +391,7 @@ Function RTRemoveOldInc {
                     if (!(Test-Path ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\'))){
                         New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\')
                     }
-                    Move-Item -Path $item.FullName -Destination $Destination
+                    Move-Item -Path $item.FullName -Destination $Destination | Out-Null
                 }
         
             }
