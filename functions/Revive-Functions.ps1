@@ -112,8 +112,12 @@ Function Get-RVFiles{
         [Switch]
         $Latest,
 
+        [parameter(Mandatory=$true)]
         [string[]]
-        $Exclusions
+        $Exclusions,
+
+        [string[]]
+        $VOLLetter
 
 
     )
@@ -136,6 +140,11 @@ Function Get-RVFiles{
             #Build the Where array                     
             $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"         
         }
+
+        if ($VOLLetter){
+            += "(`$_.FullName -like '*$VOLLetter*')"
+        }
+
         $WhereString = $WhereString -Join " -and " 
         $WhereBlock = [scriptblock]::Create($WhereString)
         $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
@@ -230,7 +239,7 @@ Function Remove-StringSpecialCharacter{
 
     FOREACH ($Str in $string)
     {
-        Write-Verbose -Message "Original String: $Str"
+        #Write-Verbose -Message "Original String: $Str"
         $Str -replace $regex, ""
     }
     } #PROCESS
@@ -351,8 +360,8 @@ Function RTRemoveOldInc {
         
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
-        #collect all the spf files and find the latest one.
-        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest
+        #collect all the spi files and find the latest one.
+        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOLLetter $volLetter
         
         #run comand to get a list of files to keep.
         $return = & $CMD $p.RVImageCmdArg1 $latestSPI.FullName $p.RVImageCmdArg3
@@ -388,9 +397,9 @@ Function RTRemoveOldInc {
                     #Move to new folder.
                     $Destination = $item.FullName.Substring(0,2)+"\$(Get-Date -Format MM.dd.yyyy)\"+ $item.FullName.Substring(3)
                     if (!(Test-Path ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\'))){
-                        New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\')
+                        New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\') | Out-Null
                     }
-                    [void](Move-Item -Path $item.FullName -Destination $Destination )
+                    Move-Item -Path $item.FullName -Destination $Destination | Out-Null
                 }
         
             }
