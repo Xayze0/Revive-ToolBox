@@ -131,15 +131,14 @@ Function Get-RVFiles{
             $SearchBase = Select-DriveLetter
         }
 
-        $WhereString = @()   
+        $WhereString = @()
         foreach ($Exclusion in $Exclusions) {
             #Build the Where array                     
-            $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"        
-            $WhereString += "-and"                        
-                    
+            $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"         
         }
-        $WhereBlock = [scriptblock]::Create( $WhereString[0..($WhereString.Length - 2)])
-        $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object $WhereBlock
+        $WhereString = $WhereString -Join " -and " 
+        $WhereBlock = [scriptblock]::Create($WhereString)
+        $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
         
     
 
@@ -340,7 +339,7 @@ Function RTRemoveOldInc {
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF -Exclusions $Exclusions
     
-    
+    #What if 0 ???
     $percentEach1 = 100/$files.Count
     
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
