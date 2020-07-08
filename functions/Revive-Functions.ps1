@@ -475,7 +475,7 @@ Function RTVerifyChain {
                 return $pso
 
 
-            }  -ArgumentList $CMD,$RVCMDarg1,$target.Name,$RVCMDarg3,$target.FullName 
+            }  -ArgumentList $CMD,$RVCMDarg1,$target.Name,$RVCMDarg3,$target.FullName | Out-Null
             #>
         }
         
