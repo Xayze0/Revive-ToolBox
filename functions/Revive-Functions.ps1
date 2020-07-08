@@ -117,7 +117,7 @@ Function Get-RVFiles{
         $Exclusions,
 
         [string[]]
-        $VOLLetter
+        $VOL_Letter
 
 
     )
@@ -141,8 +141,8 @@ Function Get-RVFiles{
             $WhereString += "(`$_.FullName -notlike '*$Exclusion*')"         
         }
 
-        if ($VOLLetter){
-            $WhereString += "(`$_.FullName -like '*$VOLLetter*')"
+        if ($VOL_Letter){
+            $WhereString += "(`$_.FullName -like '*$VOL_Letter*')"
         }
 
         $WhereString = $WhereString -Join " -and " 
@@ -380,12 +380,8 @@ Function RTRemoveOldInc {
             }
                 
         
-            #make a folder for old items to go to
-            $folder =  $LatestSPI.PSParentPath +"\"+(Get-Date -Format MM.dd.yyyy)
-            if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
-            
             #Itterate SPFs and move unneded items to the folder made above
-            $filesinVol = (Get-ChildItem $file.PSParentPath -Filter "*$volLetter*")
+            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOLLetter $volLetter -SearchBase $file.PSParentPath
         
             for ($v = 0 ; $v -lt $filesinVol.count; $v++){
                 $item = $filesinVol[$v]
