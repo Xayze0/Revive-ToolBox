@@ -72,7 +72,7 @@ Function Select-DriveLetter {
         Write-Host $echostring -ForegroundColor Yellow
     }
 
-    $dletter = Read-Host "Pick a Drive Letter"
+    $dletter = Read-Host "Pick a Drive Letter or Provide a Path"
 
 
 
