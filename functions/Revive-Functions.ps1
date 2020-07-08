@@ -481,6 +481,12 @@ Function RTVerifyChain {
         
         Write-Host "startingWait" -ForegroundColor Yellow
         #Wait for all jobs
+
+        for ($i = 0; $i -lt 20; $i++) {
+            Get-Job
+            Start-Sleep -Seconds 4
+        }
+
         Get-Job | Wait-Job | Out-Null
 
         #Init DataSet
