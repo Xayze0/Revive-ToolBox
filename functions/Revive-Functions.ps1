@@ -411,13 +411,19 @@ Function RTRemoveOldInc {
 }
 
 Function RTVerifyChain {
+    [CmdletBinding()]
+    param
+    (
+        [string[]]
+        $Exclusions
+    )
     Clear-Host  
     Write-Host "[ [Tool] Verify Chains ]" -ForegroundColor DarkCyan
     
 
     #Collect SPF Files
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
-    $files = Get-RVFiles -SPF 
+    $files = Get-RVFiles -SPF -Exclusions $Exclusions
 
     $CMD = Find-ImagePath
 
@@ -432,8 +438,7 @@ Function RTVerifyChain {
 
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
         
-
-        #collect all the spf and spi files and sort by date modified oldest to newest
+        #collect all the spf and spi files for each vol
         $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
        
@@ -474,9 +479,10 @@ Function RTVerifyChain {
         #its not so bad, as i think i can edit the return and include the testing as part of this job op. then return a dictionary of SPI i number and true false.
         #then order the list and fin the time before the first failure.
         
-
         #Wait for all jobs
         Get-Job | Wait-Job | Out-Null
+
+        #Init DataSet
         $DataSet = @()
         
         #Get all job results
@@ -485,8 +491,6 @@ Function RTVerifyChain {
 
         #Order Dataset
         $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
-        
-
         
         if ($DataSet.Count -eq 1){
             #If DataSet is only 1 item
@@ -526,8 +530,8 @@ Function RTVerifyChain {
 
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
 
-    $uSPINames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
-    $uSPFnames = Get-ChildItem $files[0].PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
+    $uSPINames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+    $uSPFnames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
 
     foreach ($SPIName in $uSPINames){
         if ($uSPFnames.Name -contains $SPIName.Name){
