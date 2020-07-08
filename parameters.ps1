@@ -1,7 +1,7 @@
-﻿# Script Parameters for scriptname.ps1
+﻿# Script Parameters for Revive-ToolBox.ps1
 <#
-    Author             : Script Author
-    Last Edit          : Initials - date
+    Author             : Bryant Bennett
+    Last Edit          : BB - 07/07/2020
 #>
 
 @{

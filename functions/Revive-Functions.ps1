@@ -1,4 +1,5 @@
 Function Show-Menu{
+    #Dynamic Menu Display Starting At 1
     param (
             [Parameter(Mandatory=$true)]
             [string]$Title,
@@ -60,7 +61,8 @@ Function Find-ImagePath{
 }
 
 Function Select-DriveLetter {
-    #collect non a-c drives on the system and haves the end user pick one.
+    #Collect all non a-c drives on the system and haves the end user pick one.
+    #Can Also be overridden with a file path to return the filepath
     $drives = Get-Volume | Where-Object {$_.DriveLetter -match '^[d-z]$'} | Sort-Object -Property DriveLetter
 
     Write-Host "[Drive Letters]"  -ForegroundColor Cyan
@@ -96,6 +98,10 @@ Function Select-DriveLetter {
 }
 
 Function Get-RVFiles{
+    #Most Useful Function Here.
+    #Collects a list of SPI or SPF files depending on switch used.
+    #Some paramters allow for the return of the latest SPI files based on file's inumber
+    #Also allows for providing of vol_letter in the form of C_VOL D_VOL to collect only items specific to the drive letter of the backed up server as all server letters just go under the same server name folder.
     [CmdletBinding()]
     param
     (
@@ -135,6 +141,7 @@ Function Get-RVFiles{
             $SearchBase = Select-DriveLetter
         }
 
+        #Starts Defining Filter Script elements based on paramters used
         $WhereString = @()
         foreach ($Exclusion in $Exclusions) {
             #Build the Where array                     
@@ -145,17 +152,16 @@ Function Get-RVFiles{
             $WhereString += "(`$_.FullName -like '*$VOLLetter*')"
         }
 
+        #Forms Script Block Object to be used as filter
         $WhereString = $WhereString -Join " -and " 
         $WhereBlock = [scriptblock]::Create($WhereString)
         $files = Get-ChildItem -recurse ($SearchBase) -include ($filter) -File | Where-Object -FilterScript $WhereBlock
         
-    
-
+        #If Latest Parameter is defined then return the latest based on the iNumber of the chain and return only that file.
         if ($Latest){
             $highesti = 1
             $highestFile = ""
             foreach ($file in $files) {
-                #$file.Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","" 
                 $currenti = [int](($file.Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
                 if ($currenti -gt $highesti){
                     $highestFile = $file
@@ -165,6 +171,7 @@ Function Get-RVFiles{
             return $highestFile
         }   
         
+        #Else Return All Files you searched for.
         return $files
     }
 }
@@ -246,6 +253,7 @@ Function Remove-StringSpecialCharacter{
 }
 
 Function RTSPXErrors{
+    #Looks over event log to find SPX errors.
     Clear-Host
     Write-Host "[ [Tool] Find SPX Errors in logs]" -ForegroundColor DarkCyan
     Write-Host "[....Collecting Log Files....]" -ForegroundColor Cyan
@@ -258,6 +266,9 @@ Function RTSPXErrors{
 }
 
 Function RTCollectBackupSizes  {
+    #Collects the space used on the disk by each server and outlines the entire space used and the size of the latest BU1
+    #Used mostly to assist with QR Process.
+    #This is where this whole script started.
     [CmdletBinding()]
     param
     (
@@ -271,7 +282,7 @@ Function RTCollectBackupSizes  {
     
 
         $files = Get-RVFiles -SPF -Exclusions $Exclusions
-        #what if 0 files??
+        #what if 0 files???
 
         $serverspath = ($files[0].FullName).Split('\')[0..(($files[0].FullName).Split('\').Count -3)] -join '\'
 
@@ -332,6 +343,9 @@ Function RTCollectBackupSizes  {
 }
 
 Function RTRemoveOldInc {
+    #Moves unrequired Incremental files to the Root of the drive where the backup is stored. :\MM.dd.yyyy
+    #I set it to move them as automating deletion of somethign so important as backups is not something this script is set so iron clad and unbreakable yet to do. And Revive staff can decide to remove after.
+    #This functions maintains the folder structure for easy restore.
     [CmdletBinding()]
     param
     (
@@ -348,19 +362,22 @@ Function RTRemoveOldInc {
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF -Exclusions $Exclusions
     
-    #What if 0 ???
     $percentEach1 = 100/$files.Count
-    
+    #What if 0 ???
+
+    #Itterate SPF Files
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
     
+        #Quick Math To Setup Progress Bar
         $pc1 = [System.Math]::Round(($percentEach1*$i),2)
         $op1msg = "SPF File : " + $file.Name
         Write-Progress -Activity "Moving Unrequired Chain Files" -Status 'Progress->' -PercentComplete $pc1 -CurrentOperation $op1msg 
         
+        #Collect chain specific to that vol letter
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
-        #collect all the spi files and find the latest one.
+        #collect all the spi files specific to that chain and find the latest one.
         $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOLLetter $volLetter
         
         #run comand to get a list of files to keep.
@@ -368,10 +385,11 @@ Function RTRemoveOldInc {
     
         #Test to see if if there is a return a null return mean bad test
         if ($return -ne $null){
-            #init var
-            $output = @()
             
-            #Cleanup output of command
+            
+            
+            #Cleanup the output of image.exe command
+            $output = @()
             Foreach ($line in $return){
                 if ($line -ne ""){
                     $clean = (Remove-StringSpecialCharacter -String $line -SpecialCharacterToKeep ':','.','"','_',' ','-','\').trim('"')
@@ -386,7 +404,6 @@ Function RTRemoveOldInc {
             
             #Itterate SPFs and move unneded items to the folder made above
             $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter
-        
             for ($v = 0 ; $v -lt $filesinVol.count; $v++){
                 $item = $filesinVol[$v]
         
@@ -411,6 +428,19 @@ Function RTRemoveOldInc {
 }
 
 Function RTVerifyChain {
+    #Used to verify Chain Health.
+    #This function tests the latest spi file based on iNumber and if it is good (image.exe command returns something) then it states the whole chain is good. It does this first as this is the likliest outcome and is faster code.
+    #If the latest fails it starts a PS Job for each SPI and SPF in that chain and collects the reurn as a powershell object
+    <# Dataset
+        'FileName'=FileName
+        'FileNameLength'=Length of the filename, used some areas where spi files will have the same iNumber but they may be consolidated daily\monthly -cd -cm and the longer the name the later in the chain it is 
+            #These two properties for a uniqe key and no two should be the same.
+
+        'TF'= return a 0 if the image is good returns a 1 if the image is bad.
+        'currenti'=returns the iNumber of the file, used for ordering chains and reporting the last known good one.
+        'return'=actual return of image.exe
+    #>
+    #Lastly this function looks for orphaned spi files that dont have an SPF and reports if found.
     [CmdletBinding()]
     param
     (
@@ -421,15 +451,14 @@ Function RTVerifyChain {
         [string]
         $RVCMDarg3
     )
+    $CMD = Find-ImagePath
+
     Clear-Host  
     Write-Host "[ [Tool] Verify Chains ]" -ForegroundColor DarkCyan
     
-
     #Collect SPF Files
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF -Exclusions $Exclusions 
-
-    $CMD = Find-ImagePath
 
     #Itterate SPF Files 
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
@@ -437,9 +466,9 @@ Function RTVerifyChain {
 
         #Generate Line Item Output
         $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
-        
         Write-Host $out -ForegroundColor Cyan
 
+        #Collect volletter of the spf.
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
 
         #Test Latest SPI
@@ -448,21 +477,14 @@ Function RTVerifyChain {
         if ($imageReturn -ne $null){
             Write-Host "     [Chain Good]" -ForegroundColor Green
         }else {
-           
+            ### Start-MultiThread Jobs###
+            Write-Host "[Testing All SPI Files .... May Take Some Time]" -ForegroundColor Yellow    
 
-            
             #collect all the spf and spi files for each vol
             $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
-            Write-Host "startingJobs" -ForegroundColor Yellow
-            ### Start-MultiThread.ps1 ###
-            #Start all jobs
-
-            
-
-
+            #Start all jobs passing required arguments
             ForEach($target in $vcTargets){
-                #<#
                 Start-Job -ScriptBlock {
                     $imageReturn = & $using:CMD $args[1] $args[4] $args[3]
                     
@@ -489,91 +511,79 @@ Function RTVerifyChain {
 
 
                 }  -ArgumentList $CMD,$RVCMDarg1,$target.Name,$RVCMDarg3,$target.FullName | Out-Null
-                #>
+
             }
-
             
-            
-            ### FIND ME
-            #its not so bad, as i think i can edit the return and include the testing as part of this job op. then return a dictionary of SPI i number and true false.
-            #then order the list and fin the time before the first failure.
-            
-            Write-Host "startingWait" -ForegroundColor Yellow
             #Wait for all jobs
-
-        
-
             Get-Job | Wait-Job | Out-Null
 
             #Init DataSet
             $DataSet = @()
             
-            Write-Host "recJobs" -ForegroundColor Yellow
             #Get all job results
             $DataSet += Get-Job  | Receive-Job -Keep
             Get-Job | Remove-Job
 
-            #Order Dataset
+            #Order Dataset - Agian off two properties Currenti and FileNameLenght to for a uniqe key for each.
             $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
             
             if ($DataSet.Count -eq 1){
                 #If DataSet is only 1 item
+                
                 if ($DataSet.TF -eq 0){
                     #Whole Chain is good
                     Write-Host "     [Chain Good]" -ForegroundColor Green
                 }else{
+                    #Whole Chain is Bad
                     Write-Host "     [Chain Unusable]" -ForegroundColor Red
                 }
             }
             else{
-                ##If More than 1 DataSet is Returned
-                if (!($DataSet.TF.Contains(1))){
-                    #Whole Chain is good
-                    Write-Host "     [Chain Good]" -ForegroundColor Green
+                #If More than 1 DataSet is Returned
+                
+                #Test the SPF
+                if ($DataSet.TF[0] -eq 1){
+                    Write-Host "     [Chain Unusable]" -ForegroundColor Red
+        
+                #find the last known good SPI
+                }else{
+                    $DSIndex = $DataSet.TF.IndexOf(1)
+                    $vcmsg = $DataSet[$DSIndex].FileName
+                    Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow
+        
                 }
-                else{
-                    if ($DataSet.TF[0] -eq 1){
-                        Write-Host "     [Chain Unusable]" -ForegroundColor Red
-            
-                    }else{
-                        #Order Dataset by 
-                        $DSIndex = $DataSet.TF.IndexOf(1)
-                        $vcmsg = $DataSet[$DSIndex].FileName
-                        Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow
-            
-                    }
 
-                }
             }
             
         }
 
+        #Test if there are spi files without an SPF
+        $SPIsMissingSPFs = [System.Collections.ArrayList]@()
+
+        $uSPINames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+        $uSPFnames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
+
+        foreach ($SPIName in $uSPINames){
+            if ($uSPFnames.Name -contains $SPIName.Name){
+                #
+            }
+            else{
+                $missingFile = Get-ChildItem $file.PSParentPath | Where-Object {$_.Name -like "*$($SPIName.Name)*.spi*"} | Select-Object -First 1
+                [void]$SPIsMissingSPFs.Add($missingFile.FullName)
+            }
+
+        }
+
+        if ($SPIsMissingSPFs.Count -ne 0){
+            Write-Host "[Found the following .SPI Chains with no matching .SPF]" -ForegroundColor DarkMagenta
+            foreach ($spi in $SPIsMissingSPFs){
+                $out = "[" + $spi.Split('\')[ $spi.Split('\').COUNT - 3 ] + " \ " + $spi.Split('\')[ $spi.Split('\').COUNT - 2 ]+ " \ " +($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).Substring(0,($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).IndexOf('-i')+5)+"]" 
+                Write-Host $out -ForegroundColor DarkMagenta
+            }
+        }
+
         
 
-    }
-
-    $SPIsMissingSPFs = [System.Collections.ArrayList]@()
-
-    $uSPINames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
-    $uSPFnames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
-
-    foreach ($SPIName in $uSPINames){
-        if ($uSPFnames.Name -contains $SPIName.Name){
-            #
-        }
-        else{
-            $missingFile = Get-ChildItem $file.PSParentPath | Where-Object {$_.Name -like "*$($SPIName.Name)*.spi*"} | Select-Object -First 1
-            [void]$SPIsMissingSPFs.Add($missingFile.FullName)
-        }
-
-    }
-
-    if ($SPIsMissingSPFs.Count -ne 0){
-        Write-Host "[Found the following .SPI Chains with no matching .SPF]" -ForegroundColor DarkMagenta
-        foreach ($spi in $SPIsMissingSPFs){
-            $out = "[" + $spi.Split('\')[ $spi.Split('\').COUNT - 3 ] + " \ " + $spi.Split('\')[ $spi.Split('\').COUNT - 2 ]+ " \ " +($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).Substring(0,($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).IndexOf('-i')+5)+"]" 
-            Write-Host $out -ForegroundColor DarkMagenta
-        }
     }
 
 }

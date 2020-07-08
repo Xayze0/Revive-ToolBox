@@ -1,24 +1,22 @@
 ﻿<#
 SYNOPSIS
-   Collection Of Tools For Revive Managment Tasks
+    Collection Of Tools For Revive Managment Tasks
 DESCRIPTION
-   Script usage description [optional]
+    #--
 EXAMPLE
-    One or more examples for how to use this script
+    #--
 NOTES
-    File Name          : filename.ps1
-    Author             : Script Author
+    File Name          : Revive-ToolBox.ps1
+    Author             : Bryant Bennett
     Prerequisite       : Preruiqisites like
                          Min. PowerShell version : 2.0
                          PS Modules and version : 
-                            PowerCLI - 6.0 R2
-    Version/GIT Tag    : GIT tag
-    Last Edit          : Initials - date
+    Last Edit          : BB - 07/07/2020
 
 #>
 [CmdletBinding()]
 Param(
-    #-- Define Powershell input parameters (optional)
+    #-- 
 )
 
 Begin{
@@ -53,26 +51,25 @@ Begin{
     }
     
 #region for Private script functions
-    #-- note: place any specific function in this region
+    #--
 
 #endregion
 }
 
 End{
-    #-- we made it, exit script.
+    #-- 
     exit-script -finished_normal
 }
 
 
 Process{
-#-- note: area to write script code.....
+    #--
     $CMD = Find-ImagePath
 
     do{
         Show-Menu -Title $P.Title -Version $p.Version -RVTools $p.RVTools
-        $p.Exclusions
         $UserInput = Read-Host "Please make a selection"
-        
+
         #Can I make this a Dynamic Switch???
         switch ($UserInput)
         {
@@ -90,6 +87,5 @@ Process{
         }
         Pause
    }until ($UserInput -eq 'q')
-   
 }
 #####
