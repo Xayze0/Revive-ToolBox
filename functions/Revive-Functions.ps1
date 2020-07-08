@@ -479,12 +479,14 @@ Function RTVerifyChain {
         #its not so bad, as i think i can edit the return and include the testing as part of this job op. then return a dictionary of SPI i number and true false.
         #then order the list and fin the time before the first failure.
         
+        Write-Host "startingWait" -ForegroundColor Yellow
         #Wait for all jobs
         Get-Job | Wait-Job | Out-Null
 
         #Init DataSet
         $DataSet = @()
         
+        Write-Host "recJobs" -ForegroundColor Yellow
         #Get all job results
         $DataSet += Get-Job  | Receive-Job -Keep
         Get-Job | Remove-Job
