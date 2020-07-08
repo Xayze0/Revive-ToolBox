@@ -478,7 +478,7 @@ Function RTVerifyChain {
             Write-Host "     [Chain Good]" -ForegroundColor Green
         }else {
             ### Start-MultiThread Jobs###
-            Write-Host "[Testing All SPI Files .... May Take Some Time]" -ForegroundColor Yellow    
+            Write-Host "     [Testing All SPI Files .... May Take Some Time]" -ForegroundColor Yellow    
 
             #collect all the spf and spi files for each vol
             $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
