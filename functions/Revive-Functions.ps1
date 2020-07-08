@@ -527,7 +527,7 @@ Function RTVerifyChain {
             #Order Dataset - Agian off two properties Currenti and FileNameLenght to for a uniqe key for each.
             $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
             
-            if ($DataSet.Count -eq 1){
+            if ($DataSet -isnot [array]){
                 #If DataSet is only 1 item
                 
                 if ($DataSet.TF -eq 0){
