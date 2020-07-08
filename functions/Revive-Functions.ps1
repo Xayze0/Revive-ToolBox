@@ -415,7 +415,11 @@ Function RTVerifyChain {
     param
     (
         [string[]]
-        $Exclusions
+        $Exclusions,
+        [string]
+        $RVCMDarg1,
+        [string]
+        $RVCMDarg3
     )
     Clear-Host  
     Write-Host "[ [Tool] Verify Chains ]" -ForegroundColor DarkCyan
@@ -471,7 +475,7 @@ Function RTVerifyChain {
                 return $pso
 
 
-            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target.Name,$p.RVImageCmdArg3,$target.FullName 
+            }  -ArgumentList $CMD,$RVCMDarg1,$target.Name,$RVCMDarg3,$target.FullName 
             #>
         }
         
