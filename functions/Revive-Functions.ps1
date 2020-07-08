@@ -444,7 +444,7 @@ Function RTVerifyChain {
 
         #Test Latest SPI
         $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Exclusions $Exclusions -VOL_Letter $volLetter -Latest
-        $imageReturn = & $using:CMD $RVCMDarg1 $latestSPI.FullName $RVCMDarg3 
+        $imageReturn = & $CMD $RVCMDarg1 $latestSPI.FullName $RVCMDarg3 
         if ($imageReturn -ne $null){
             Write-Host "     [Chain Good]" -ForegroundColor Green
         }else {
