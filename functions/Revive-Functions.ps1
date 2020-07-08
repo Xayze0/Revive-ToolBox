@@ -142,7 +142,7 @@ Function Get-RVFiles{
         }
 
         if ($VOL_Letter){
-            $WhereString += "(`$_.FullName -like '*$VOL_Letter*')"
+            $WhereString += "(`$_.FullName -like '*$VOLLetter*')"
         }
 
         $WhereString = $WhereString -Join " -and " 
@@ -361,7 +361,7 @@ Function RTRemoveOldInc {
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
         #collect all the spi files and find the latest one.
-        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions 
+        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOLLetter $volLetter
         
         #run comand to get a list of files to keep.
         $return = & $CMD $p.RVImageCmdArg1 $latestSPI.FullName $p.RVImageCmdArg3
@@ -380,8 +380,12 @@ Function RTRemoveOldInc {
             }
                 
         
+            #make a folder for old items to go to
+            $folder =  $LatestSPI.PSParentPath +"\"+(Get-Date -Format MM.dd.yyyy)
+            if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
+            
             #Itterate SPFs and move unneded items to the folder made above
-            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter -SearchBase $file.PSParentPath
+            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter
         
             for ($v = 0 ; $v -lt $filesinVol.count; $v++){
                 $item = $filesinVol[$v]
