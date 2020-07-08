@@ -423,7 +423,7 @@ Function RTVerifyChain {
 
     #Collect SPF Files
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
-    $files = Get-RVFiles -SPF -Exclusions $Exclusions
+    $files = Get-RVFiles -SPF -Exclusions $Exclusions 
 
     $CMD = Find-ImagePath
 
