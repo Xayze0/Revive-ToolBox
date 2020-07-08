@@ -441,97 +441,112 @@ Function RTVerifyChain {
         Write-Host $out -ForegroundColor Cyan
 
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
-        
-        #collect all the spf and spi files for each vol
-        $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
-        Write-Host "startingJobs" -ForegroundColor Yellow
-        ### Start-MultiThread.ps1 ###
-        #Start all jobs
-        ForEach($target in $vcTargets){
-            #<#
-            Start-Job -ScriptBlock {
-                $imageReturn = & $using:CMD $args[1] $args[4] $args[3]
-                
-                if ($imageReturn -ne $null){
-                    [int]$imageReturnTF = 0
-                }else {
-                    [int]$imageReturnTF = 1
-                }
+        #Test Latest SPI
+        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Exclusions $Exclusions -VOL_Letter $volLetter -Latest
+        $imageReturn = & $using:CMD $RVCMDarg1 $latestSPI.FullName $RVCMDarg3 
+        if ($imageReturn -ne $null){
+            Write-Host "     [Chain Good]" -ForegroundColor Green
+        }else {
+           
 
-                if ($args[2] -like "*.spf*"){
-                    $currenti = 0
-                }else{
-                    $currenti = [int](($args[2] -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
-                }
+            
+            #collect all the spf and spi files for each vol
+            $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
+
+            Write-Host "startingJobs" -ForegroundColor Yellow
+            ### Start-MultiThread.ps1 ###
+            #Start all jobs
+
+            
 
 
-                $pso = New-Object psobject -Property    @{  'FileName'=$args[2];
-                                                            'FileNameLength'=$args[2].length;
-                                                            'TF'=$imageReturnTF;
-                                                            'currenti'=$currenti;
-                                                            'return'=$imageReturn;
-                                                        }
-                return $pso
+            ForEach($target in $vcTargets){
+                #<#
+                Start-Job -ScriptBlock {
+                    $imageReturn = & $using:CMD $args[1] $args[4] $args[3]
+                    
+                    if ($imageReturn -ne $null){
+                        [int]$imageReturnTF = 0
+                    }else {
+                        [int]$imageReturnTF = 1
+                    }
+
+                    if ($args[2] -like "*.spf*"){
+                        $currenti = 0
+                    }else{
+                        $currenti = [int](($args[2] -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
+                    }
 
 
-            }  -ArgumentList $CMD,$RVCMDarg1,$target.Name,$RVCMDarg3,$target.FullName | Out-Null
-            #>
-        }
-        
-        ### FIND ME
-        #its not so bad, as i think i can edit the return and include the testing as part of this job op. then return a dictionary of SPI i number and true false.
-        #then order the list and fin the time before the first failure.
-        
-        Write-Host "startingWait" -ForegroundColor Yellow
-        #Wait for all jobs
+                    $pso = New-Object psobject -Property    @{  'FileName'=$args[2];
+                                                                'FileNameLength'=$args[2].length;
+                                                                'TF'=$imageReturnTF;
+                                                                'currenti'=$currenti;
+                                                                'return'=$imageReturn;
+                                                            }
+                    return $pso
 
-       
 
-        Get-Job | Wait-Job | Out-Null
-
-        #Init DataSet
-        $DataSet = @()
-        
-        Write-Host "recJobs" -ForegroundColor Yellow
-        #Get all job results
-        $DataSet += Get-Job  | Receive-Job -Keep
-        Get-Job | Remove-Job
-
-        #Order Dataset
-        $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
-        
-        if ($DataSet.Count -eq 1){
-            #If DataSet is only 1 item
-            if ($DataSet.TF -eq 0){
-                #Whole Chain is good
-                Write-Host "     [Chain Good]" -ForegroundColor Green
-            }else{
-                Write-Host "     [Chain Unusable]" -ForegroundColor Red
+                }  -ArgumentList $CMD,$RVCMDarg1,$target.Name,$RVCMDarg3,$target.FullName | Out-Null
+                #>
             }
-        }
-        else{
-            ##If More than 1 DataSet is Returned
-            if (!($DataSet.TF.Contains(1))){
-                #Whole Chain is good
-                Write-Host "     [Chain Good]" -ForegroundColor Green
+
+            
+            
+            ### FIND ME
+            #its not so bad, as i think i can edit the return and include the testing as part of this job op. then return a dictionary of SPI i number and true false.
+            #then order the list and fin the time before the first failure.
+            
+            Write-Host "startingWait" -ForegroundColor Yellow
+            #Wait for all jobs
+
+        
+
+            Get-Job | Wait-Job | Out-Null
+
+            #Init DataSet
+            $DataSet = @()
+            
+            Write-Host "recJobs" -ForegroundColor Yellow
+            #Get all job results
+            $DataSet += Get-Job  | Receive-Job -Keep
+            Get-Job | Remove-Job
+
+            #Order Dataset
+            $DataSet = $DataSet | Sort-Object -Property Currenti,FileNameLength
+            
+            if ($DataSet.Count -eq 1){
+                #If DataSet is only 1 item
+                if ($DataSet.TF -eq 0){
+                    #Whole Chain is good
+                    Write-Host "     [Chain Good]" -ForegroundColor Green
+                }else{
+                    Write-Host "     [Chain Unusable]" -ForegroundColor Red
+                }
             }
             else{
-                if ($DataSet.TF[0] -eq 1){
-                    Write-Host "     [Chain Unusable]" -ForegroundColor Red
-        
-                }else{
-                    #Order Dataset by 
-                    $DSIndex = $DataSet.TF.IndexOf(1)
-                    $vcmsg = $DataSet[$DSIndex].FileName
-                    Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow
-        
+                ##If More than 1 DataSet is Returned
+                if (!($DataSet.TF.Contains(1))){
+                    #Whole Chain is good
+                    Write-Host "     [Chain Good]" -ForegroundColor Green
                 }
+                else{
+                    if ($DataSet.TF[0] -eq 1){
+                        Write-Host "     [Chain Unusable]" -ForegroundColor Red
+            
+                    }else{
+                        #Order Dataset by 
+                        $DSIndex = $DataSet.TF.IndexOf(1)
+                        $vcmsg = $DataSet[$DSIndex].FileName
+                        Write-Host "     [Chain Broken] Last Known Good $vcmsg" -ForegroundColor Yellow
+            
+                    }
 
+                }
             }
+            
         }
-        
-
 
         
 
