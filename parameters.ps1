@@ -15,6 +15,6 @@
 
         Version = "3.0.0"  
 
-        Exclusions = "Old Chains","spf.tmp","bitmap","OldChains"
+        Exclusions = "Old Chains","spf.tmp","bitmap","OldChains",".remote"
                     
 }
