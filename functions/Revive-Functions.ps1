@@ -557,33 +557,32 @@ Function RTVerifyChain {
             
         }
 
-        #Test if there are spi files without an SPF
-        $SPIsMissingSPFs = [System.Collections.ArrayList]@()
+    }
 
-        $uSPINames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
-        $uSPFnames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
+    #Test if there are spi files without an SPF
+    $SPIsMissingSPFs = [System.Collections.ArrayList]@()
 
-        foreach ($SPIName in $uSPINames){
-            if ($uSPFnames.Name -contains $SPIName.Name){
-                #
-            }
-            else{
-                $missingFile = Get-ChildItem $file.PSParentPath | Where-Object {$_.Name -like "*$($SPIName.Name)*.spi*"} | Select-Object -First 1
-                [void]$SPIsMissingSPFs.Add($missingFile.FullName)
-            }
+    $uSPINames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
+    $uSPFnames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
 
+    foreach ($SPIName in $uSPINames){
+        if ($uSPFnames.Name -contains $SPIName.Name){
+            #
         }
-
-        if ($SPIsMissingSPFs.Count -ne 0){
-            Write-Host "[Found the following .SPI Chains with no matching .SPF]" -ForegroundColor DarkMagenta
-            foreach ($spi in $SPIsMissingSPFs){
-                $out = "[" + $spi.Split('\')[ $spi.Split('\').COUNT - 3 ] + " \ " + $spi.Split('\')[ $spi.Split('\').COUNT - 2 ]+ " \ " +($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).Substring(0,($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).IndexOf('-i')+5)+"]" 
-                Write-Host $out -ForegroundColor DarkMagenta
-            }
+        else{
+            $missingFile = Get-ChildItem $file.PSParentPath | Where-Object {$_.Name -like "*$($SPIName.Name)*.spi*"} | Select-Object -First 1
+            [void]$SPIsMissingSPFs.Add($missingFile.FullName)
         }
-
-        
 
     }
+
+    if ($SPIsMissingSPFs.Count -ne 0){
+        Write-Host "[Found the following .SPI Chains with no matching .SPF]" -ForegroundColor DarkMagenta
+        foreach ($spi in $SPIsMissingSPFs){
+            $out = "[" + $spi.Split('\')[ $spi.Split('\').COUNT - 3 ] + " \ " + $spi.Split('\')[ $spi.Split('\').COUNT - 2 ]+ " \ " +($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).Substring(0,($spi.Split('\')[ $spi.Split('\').COUNT - 1 ]).IndexOf('-i')+5)+"]" 
+            Write-Host $out -ForegroundColor DarkMagenta
+        }
+    }
+
 
 }
