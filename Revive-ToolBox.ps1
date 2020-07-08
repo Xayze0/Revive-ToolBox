@@ -60,7 +60,7 @@ Begin{
 
 End{
     #-- we made it, exit script.
-    #exit-script -finished_normal
+    exit-script -finished_normal
 }
 
 
@@ -71,6 +71,7 @@ Process{
     do{
         Show-Menu -Title $P.Title -Version $p.Version -RVTools $p.RVTools
         $UserInput = Read-Host "Please make a selection"
+        $p.Exclusions
         #Can I make this a Dynamic Switch???
         switch ($UserInput)
         {
