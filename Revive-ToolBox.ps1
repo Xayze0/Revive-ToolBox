@@ -81,7 +81,7 @@ Process{
               } '3' {
                     RTRemoveOldInc -Exclusions $p.Exclusions
               } '4' {
-                    RTVerifyChain
+                    RTVerifyChain -Exclusions $p.Exclusions
               } 'q' {
                    return
               }
