@@ -361,7 +361,7 @@ Function RTRemoveOldInc {
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
         #collect all the spi files and find the latest one.
-        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOLLetter $volLetter
+        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions 
         
         #run comand to get a list of files to keep.
         $return = & $CMD $p.RVImageCmdArg1 $latestSPI.FullName $p.RVImageCmdArg3
@@ -381,7 +381,7 @@ Function RTRemoveOldInc {
                 
         
             #Itterate SPFs and move unneded items to the folder made above
-            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOLLetter $volLetter -SearchBase $file.PSParentPath
+            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter -SearchBase $file.PSParentPath
         
             for ($v = 0 ; $v -lt $filesinVol.count; $v++){
                 $item = $filesinVol[$v]
