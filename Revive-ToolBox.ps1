@@ -70,8 +70,9 @@ Process{
 
     do{
         Show-Menu -Title $P.Title -Version $p.Version -RVTools $p.RVTools
-        $UserInput = Read-Host "Please make a selection"
         $p.Exclusions
+        $UserInput = Read-Host "Please make a selection"
+        
         #Can I make this a Dynamic Switch???
         switch ($UserInput)
         {
