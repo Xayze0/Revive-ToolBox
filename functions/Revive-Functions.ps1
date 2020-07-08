@@ -441,7 +441,7 @@ Function RTVerifyChain {
         #collect all the spf and spi files for each vol
         $vcTargets = Get-ChildItem $file.PSParentPath | Where-Object {($_.Name -like "*$volLetter*.spi") -or ($_.Name -like "*$volLetter*.spf") } 
 
-       
+        Write-Host "startingJobs" -ForegroundColor Yellow
         ### Start-MultiThread.ps1 ###
         #Start all jobs
         ForEach($target in $vcTargets){
