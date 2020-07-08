@@ -471,7 +471,7 @@ Function RTVerifyChain {
                 return $pso
 
 
-            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target.Name,$p.RVImageCmdArg3,$target.FullName | Out-Null
+            }  -ArgumentList $CMD,$p.RVImageCmdArg1,$target.Name,$p.RVImageCmdArg3,$target.FullName 
             #>
         }
         
