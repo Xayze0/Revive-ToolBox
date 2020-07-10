@@ -165,6 +165,7 @@ Function Get-RVFiles{
                 $currenti = [int](($file.Name   -replace '.+?(?=[i]\d+)' , '' -replace "[^\d+]*$","").Substring(1)) 
                 if ($currenti -gt $highesti){
                     $highestFile = $file
+                    $highesti = $currenti
 
                 }
             }
