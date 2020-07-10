@@ -378,7 +378,7 @@ Function RTRemoveOldInc {
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
         #collect all the spi files specific to that chain and find the latest one.
-        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOLLetter $volLetter
+        $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOL_Letter $volLetter
         
         #run comand to get a list of files to keep.
         $return = & $CMD $p.RVImageCmdArg1 $latestSPI.FullName $p.RVImageCmdArg3
