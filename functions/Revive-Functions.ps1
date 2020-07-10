@@ -404,7 +404,7 @@ Function RTRemoveOldInc {
             if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
             
             #Itterate SPFs and move unneded items to the folder made above
-            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter
+            $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter -SearchBase $file.PSParentPath
             for ($v = 0 ; $v -lt $filesinVol.count; $v++){
                 $item = $filesinVol[$v]
         
