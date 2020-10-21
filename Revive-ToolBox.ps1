@@ -75,7 +75,7 @@ Process{
               } '2' {
                     RTSPXErrors 
               } '3' {
-                    RTRemoveOldInc -Exclusions $p.Exclusions
+                    RTRemoveOldInc -Exclusions $p.Exclusions -RVCMDarg1 $p.RVImageCmdArg1 -RVCMDarg3 $p.RVImageCmdArg3
               } '4' {
                     RTVerifyChain -Exclusions $p.Exclusions -RVCMDarg1 $p.RVImageCmdArg1 -RVCMDarg3 $p.RVImageCmdArg3
               } 'q' {

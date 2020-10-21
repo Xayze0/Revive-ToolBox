@@ -351,7 +351,11 @@ Function RTRemoveOldInc {
     param
     (
         [string[]]
-        $Exclusions
+        $Exclusions,
+        [string]
+        $RVCMDarg1,
+        [string]
+        $RVCMDarg3
     )
 
     Clear-Host
@@ -376,7 +380,7 @@ Function RTRemoveOldInc {
         $LatestSPI = Get-RVFiles -SPI -SearchBase $file.PSParentPath -Latest -Exclusions $Exclusions -VOL_Letter $volLetter
         
         #run comand to get a list of files to keep.
-        $return = & $CMD $p.RVImageCmdArg1 $latestSPI.FullName $p.RVImageCmdArg3
+        $return = & $CMD $RVCMDarg1 $latestSPI.FullName $RVCMDarg3
     
         #Test to see if if there is a return a null return mean bad test
         if ($return -ne $null){
@@ -412,6 +416,9 @@ Function RTRemoveOldInc {
 
         }
 
+        else {
+            Write-Host "Error Finding Output of image.exe"
+        }
     }
     
 }
