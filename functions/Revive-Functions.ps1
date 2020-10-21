@@ -408,7 +408,13 @@ Function RTRemoveOldInc {
                 #If our test file is not in the required list
                 if (!($output.Contains($teststr))){
                     #Move to new folder.
-                    Get-ChildItem $LatestSPI.DirectoryName | Where-Object {$_.Name -like "*$teststr*"} | Move-Item -Destination $folder | Out-Null
+                    Get-ChildItem $LatestSPI.DirectoryName | Where-Object { ($_.Name -like "$teststr.spi") `
+                                                                            -or `
+                                                                            ($_.Name -like "$teststr.md5") `
+                                                                            -or `
+                                                                            ($_.Name -like "$teststr.bitmap") `
+                                                                            } `
+                                                                            | Move-Item -Destination $folder | Out-Null
                     
                 }
         
