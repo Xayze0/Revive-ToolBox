@@ -295,7 +295,7 @@ Function RTCollectBackupSizes  {
             Write-Host "  "
             Write-Host "---$server------------------------------" -ForegroundColor Green
         
-            $Backups = Get-ChildItem $Server.FullName | Where-Object {!($_.PSIsContainer)}
+            $Backups = Get-ChildItem $Server.FullName | Where-Object { ((!($_.PSIsContainer)) -and ($_.Name -notlike ".remote")) }
 
                 $manyNames = @()
 
