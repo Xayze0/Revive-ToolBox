@@ -396,7 +396,7 @@ Function RTRemoveOldInc {
                 
             #make a folder for old items to go to
             $folder =  $LatestSPI.DirectoryName+"\"+(Get-Date -Format MM.dd.yyyy)
-            if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
+            if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder | Out-Null } 
             
             #Itterate SPFs and move unneded items to the folder made above
             $filesinVol = Get-RVFiles -SPI -Exclusions $Exclusions -VOL_Letter $volLetter -SearchBase $file.PSParentPath
@@ -408,8 +408,8 @@ Function RTRemoveOldInc {
                 #If our test file is not in the required list
                 if (!($output.Contains($teststr))){
                     #Move to new folder.
-                    $Destination = "$folder\$($item.Name)"
-                    Move-Item -Path $item.FullName -Destination $Destination | Out-Null
+                    Get-ChildItem $LatestSPI.DirectoryName | Where-Object {$_.Name -like "*$teststr*"} | Move-Item -Destination $folder | Out-Null
+                    
                 }
         
             }
