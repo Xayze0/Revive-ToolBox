@@ -26,7 +26,7 @@ Begin{
     $VerbosePreference="Continue"
     $ErrorActionPreference="Continue"
     $WarningPreference="Continue"
-    clear-host #-- clear CLi
+    clear-host 
 
 	#-- determine script location and name
     $scriptPath=(get-item (Split-Path -Path $MyInvocation.MyCommand.Definition)).FullName
@@ -56,10 +56,6 @@ Begin{
 #endregion
 }
 
-End{
-    #-- 
-    exit-script -finished_normal
-}
 
 
 Process{
@@ -88,5 +84,11 @@ Process{
         }
         Pause
    }until ($UserInput -eq 'q')
+}
+
+
+End{
+    #-- 
+    exit-script -finished_normal
 }
 #####

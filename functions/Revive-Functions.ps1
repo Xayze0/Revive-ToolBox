@@ -24,9 +24,9 @@ Function Show-Menu{
         Write-Host $bar
         $count++
         }
-        Write-Host "    | ][ |"
-        Write-Host "    | ][ |" 
-        Write-Host "    | ][ |"   
+        Write-Host "    | ][ |     :"
+        Write-Host "    | ][ |     :" 
+        Write-Host "    | ][ |     :"   
         Write-Host "    | ][ |     : Press Q to Close  "
         Write-Host "  .'  __   ."
         Write-Host "  |  /  \  |"
@@ -363,18 +363,12 @@ Function RTRemoveOldInc {
     Write-Host "[Collecting SPF Files]" -ForegroundColor Cyan
     $files = Get-RVFiles -SPF -Exclusions $Exclusions
     
-    $percentEach1 = 100/$files.Count
     #What if 0 ???
 
     #Itterate SPF Files
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
     
-        #Quick Math To Setup Progress Bar
-        $pc1 = [System.Math]::Round(($percentEach1*$i),2)
-        $op1msg = "SPF File : " + $file.Name
-        Write-Progress -Activity "Moving Unrequired Chain Files" -Status 'Progress->' -PercentComplete $pc1 -CurrentOperation $op1msg 
-        
         #Collect chain specific to that vol letter
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
     
@@ -387,8 +381,6 @@ Function RTRemoveOldInc {
         #Test to see if if there is a return a null return mean bad test
         if ($return -ne $null){
             
-            
-            
             #Cleanup the output of image.exe command
             $output = @()
             Foreach ($line in $return){
@@ -398,9 +390,8 @@ Function RTRemoveOldInc {
                 }
             }
                 
-        
             #make a folder for old items to go to
-            $folder =  $LatestSPI.PSParentPath +"\"+(Get-Date -Format MM.dd.yyyy)
+            $folder =  $LatestSPI.DirectoryName+"\"+(Get-Date -Format MM.dd.yyyy)
             if (!(Test-Path -Path $folder)){ New-Item -ItemType Directory -Path $folder}
             
             #Itterate SPFs and move unneded items to the folder made above
@@ -413,10 +404,7 @@ Function RTRemoveOldInc {
                 #If our test file is not in the required list
                 if (!($output.Contains($teststr))){
                     #Move to new folder.
-                    $Destination = $item.FullName.Substring(0,2)+"\$(Get-Date -Format MM.dd.yyyy)\"+ $item.FullName.Substring(3)
-                    if (!(Test-Path ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\'))){
-                        New-Item -ItemType Directory ($Destination.Split('\')[0..($Destination.Split('\').Count - 2)] -join '\') | Out-Null
-                    }
+                    $Destination = "$folder\$($item.Name)"
                     Move-Item -Path $item.FullName -Destination $Destination | Out-Null
                 }
         
