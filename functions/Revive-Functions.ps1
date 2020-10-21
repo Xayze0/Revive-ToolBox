@@ -24,9 +24,6 @@ Function Show-Menu{
         Write-Host $bar
         $count++
         }
-        Write-Host "    | ][ |     "
-        Write-Host "    | ][ |     " 
-        Write-Host "    | ][ |     "   
         Write-Host "    | ][ |     : Press Q to Close  "
         Write-Host "  .'  __   ."
         Write-Host "  |  /  \  |"
