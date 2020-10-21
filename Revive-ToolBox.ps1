@@ -71,6 +71,7 @@ Process{
         $UserInput = Read-Host "Please make a selection"
 
         #Can I make this a Dynamic Switch???
+        #Updated
         switch ($UserInput)
         {
                 '1' {
