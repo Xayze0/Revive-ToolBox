@@ -412,7 +412,7 @@ Function RTRemoveOldInc {
                                                                             -or `
                                                                             ($_.Name -like "$teststr.md5") `
                                                                             -or `
-                                                                            ($_.Name -like "$teststr.bitmap") `
+                                                                            ($_.Name -like "$teststr.spi.bitmap") `
                                                                             } `
                                                                             | Move-Item -Destination $folder | Out-Null
                     
