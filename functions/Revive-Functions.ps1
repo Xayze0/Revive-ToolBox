@@ -27,7 +27,7 @@ Function Show-Menu{
         Write-Host "    | ][ |"
         Write-Host "    | ][ |" 
         Write-Host "    | ][ |"   
-        Write-Host "    | ][ |"
+        Write-Host "    | ][ |     : Press Q to Close  "
         Write-Host "  .'  __   ."
         Write-Host "  |  /  \  |"
         Write-Host "  |  \__/  |"
