@@ -78,6 +78,8 @@ Process{
                     RTRemoveOldInc -Exclusions $p.Exclusions -RVCMDarg1 $p.RVImageCmdArg1 -RVCMDarg3 $p.RVImageCmdArg3
               } '4' {
                     RTVerifyChain -Exclusions $p.Exclusions -RVCMDarg1 $p.RVImageCmdArg1 -RVCMDarg3 $p.RVImageCmdArg3
+              } '5' {
+                    #
               } 'q' {
                    return
               }
