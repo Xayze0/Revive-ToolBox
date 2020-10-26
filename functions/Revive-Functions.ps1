@@ -369,6 +369,9 @@ Function RTRemoveOldInc {
     #Itterate SPF Files
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
+
+        $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
+        Write-Host $out -ForegroundColor Cyan
     
         #Collect chain specific to that vol letter
         $volLetter = $file.Name.Substring($file.Name.IndexOf('_VOL') - 1 ,1)+"_VOL"
