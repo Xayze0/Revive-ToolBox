@@ -112,6 +112,10 @@ Function Get-RVFiles{
         [Switch]
         $SPI,
 
+        [parameter(Mandatory=$true,ParameterSetName="WithMD5")]
+        [Switch]
+        $MD5,
+
         [Switch]
         $Latest,
 
@@ -131,6 +135,9 @@ Function Get-RVFiles{
         }
         if ($SPI){
             $filter=@("*.spi")
+        }
+        if ($MD5){
+            $filter=@("*.md5")
         }
         if ($SearchBase){
             $SearchBase = $SearchBase
@@ -586,5 +593,38 @@ Function RTVerifyChain {
         }
     }
 
+
+}
+
+function RTVerifyIM {
+    param (
+        [string[]]
+        $Exclusions
+    )
+    $CMD = Find-ImagePath
+    $RVVerifyIMarg1 = "v"
+    
+    #Collect MD5 Files 
+    $files = Get-RVFiles -MD5 -Exclusions $Exclusions 
+
+
+    foreach ($file in $files){
+
+        #Echo
+        $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
+        Write-Host $out -ForegroundColor Cyan
+        
+        #Run Verify Comand
+        $imageReturn = & $CMD $RVVerifyIMarg1 $file.FullName 
+
+        #Identify Success or failure.
+        
+    }
+
+    #Identify Success or failure.
+
+    #Report BLAH BLAH
+
+    
 
 }
