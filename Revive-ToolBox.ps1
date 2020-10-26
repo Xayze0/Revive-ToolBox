@@ -80,6 +80,8 @@ Process{
                     RTVerifyChain -Exclusions $p.Exclusions -RVCMDarg1 $p.RVImageCmdArg1 -RVCMDarg3 $p.RVImageCmdArg3
               } '5' {
                     #
+              } '6' {
+                    #
               } 'q' {
                    return
               }
