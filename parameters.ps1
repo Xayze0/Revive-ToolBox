@@ -13,7 +13,7 @@
 
         Title = "Revive-ToolBox"
 
-        Version = "3.0.1"  
+        Version = "3.0.3"  
 
         Exclusions = "Old Chains","spf.tmp","bitmap","OldChains"
            

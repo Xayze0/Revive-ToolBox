@@ -568,11 +568,13 @@ Function RTVerifyChain {
 
     }
 
+    <#
     #Test if there are spi files without an SPF
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
-        Get-RVFiles -SPI -SearchBase $file -Exclusions $Exclusions
+        Get-RVFiles -SPI -SearchBase $file.Directory -Exclusions $Exclusions
+
     }
 
     
@@ -598,7 +600,8 @@ Function RTVerifyChain {
 
     #Test if there are spi files without an SPF
 
-
+    #>
+    
 }
 
 function RTVerifyIM {
