@@ -82,6 +82,8 @@ Process{
                     Write-Host "These are not the droids your looking for"
               } '6' {
                     Write-Host "These are not the droids your looking for"
+              } 'AK' {
+                    RTIMFolders -Exclusions $p.Exclusions
               } 'q' {
                    return
               }

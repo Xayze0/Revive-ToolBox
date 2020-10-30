@@ -570,9 +570,12 @@ Function RTVerifyChain {
 
     #Test if there are spi files without an SPF
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
+    for ($i = 0 ; $i -lt $files.Count ; $i++){ 
+        $file = $files[$i]
+        Get-RVFiles -SPI -SearchBase $file
+    }
 
-    $uSPINames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spi")} | Select-Object @{N='Name'; E={$_.Name.Substring(0,$_.Name.IndexOf('-i'))}} -Unique
-    $uSPFnames = Get-ChildItem $files.PSParentPath -Recurse | Where-Object {($_.Name -like "*$volLetter*.spf")} | Select-Object @{N='Name'; E={$_.name.Substring(0,$_.name.Length-4)}} -Unique
+    
 
     foreach ($SPIName in $uSPINames){
         if ($uSPFnames.Name -contains $SPIName.Name){
@@ -593,6 +596,8 @@ Function RTVerifyChain {
         }
     }
 
+    #Test if there are spi files without an SPF
+
 
 }
 
@@ -605,9 +610,9 @@ function RTVerifyIM {
     $RVVerifyIMarg1 = "v"
     
     #Collect MD5 Files 
-    $files = Get-RVFiles -MD5 -Exclusions $Exclusions 
+    $test = Get-ChildItem -Path "c:\Program Files (x86)\StorageCraft\ImageManager\Logs" | Get-Content | Where-Object {$_ -like "*Error*"}
 
-
+    <#
     foreach ($file in $files){
 
         #Echo
@@ -617,14 +622,62 @@ function RTVerifyIM {
         #Run Verify Comand
         $imageReturn = & $CMD $RVVerifyIMarg1 $file.FullName 
 
-        #Identify Success or failure.
+        if ($imageReturn){
+            #Identify Success or failure.
+            if ($imageReturn[2].IndexOf("SUCCESS.") -eq 0){
+                Write-Host "     [MD5 Good]" -ForegroundColor Green
+            }else{
+                Write-Host "     [MD5 Bad]" -ForegroundColor Red
+            }
+        }
         
     }
+    #>
+    
 
-    #Identify Success or failure.
-
-    #Report BLAH BLAH
 
     
 
+}
+
+function RTIMUsageReport {
+    param (
+        
+    )
+    
+}
+
+function RTIMFolders{
+    param (
+        [string[]]
+        $Exclusions
+    )
+    $spfs = Get-RVFiles -SPF -SearchBase (Select-DriveLetter) -Exclusions $Exclusions
+    $BigLong = ""
+    
+
+    $currClint = ""
+    $currServer = ""
+    foreach ($spf in $spfs){
+
+        $client = $spf.FullName.Split('\')[$spf.FullName.Split('\').count - 3]
+
+        if ($currClint -ne $client){
+            Write-Host "#$client"
+            $currClint = $client
+            $BigLong += " " + $currClint + "`r"
+        }
+        $server = $spf.FullName.Split('\')[$spf.FullName.Split('\').count - 2]
+
+        if ($currServer -ne $server){
+            Write-Host "[--] $($spf.FullName.Split('\')[$spf.FullName.Split('\').count - 2])"
+            $BigLong += "`t" + $spf.FullName.Split('\')[$spf.FullName.Split('\').count - 2] + "`r"
+            Write-Host "[--] [--] $($spf.DirectoryName)"
+            $BigLong += "`t `t" + $spf.DirectoryName + "`r"
+            $currServer = $server
+        }
+        
+    }
+
+    $BigLong | Set-Clipboard
 }
