@@ -572,7 +572,7 @@ Function RTVerifyChain {
     $SPIsMissingSPFs = [System.Collections.ArrayList]@()
     for ($i = 0 ; $i -lt $files.Count ; $i++){ 
         $file = $files[$i]
-        Get-RVFiles -SPI -SearchBase $file
+        Get-RVFiles -SPI -SearchBase $file -Exclusions $Exclusions
     }
 
     
