@@ -9,7 +9,9 @@
         RVImageCmdArg1 = "qp"
         RVImageCmdArg3 = 'd=$n'
         
-        RVTools = [ordered]@{ RTCollectBackupSizes = "Collect Backup Sizes"; RTSPXErrors = "Find SPX Errors in logs"; RTRemoveOldInc = "Move unrequired .SPI Files" ; RTVerifyChain = "Verify Chains";RTVerifyIM = "Verify IM (Under Construction)";RTIMUsageReport = "IM Usage Report (Under Construction)"}
+        RVTools = [ordered]@{ RTCollectBackupSizes = "Collect Backup Sizes"; RTSPXErrors = "Find SPX Errors in logs"; RTRemoveOldInc = "Move unrequired .SPI Files" ; RTVerifyChain = "Verify Chains"}
+
+        RVToolsIM = [ordered]@{RTIMUsageReport = "IM Usage Report (Under Construction)"}
 
         Title = "Revive-ToolBox"
 

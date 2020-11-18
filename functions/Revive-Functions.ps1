@@ -6,7 +6,9 @@ Function Show-Menu{
             [Parameter(Mandatory=$true)]
             [string]$Version,
             [Parameter(Mandatory=$true)]
-            [System.Collections.Specialized.OrderedDictionary]$RVTools 
+            [System.Collections.Specialized.OrderedDictionary]$RVTools,
+            [Parameter(Mandatory=$true)]
+            [System.Collections.Specialized.OrderedDictionary]$RVToolsIM 
     )
     Clear-Host
         Write-Host "===================[ $Title ]====================[v$Version]"
@@ -24,6 +26,13 @@ Function Show-Menu{
         Write-Host $bar
         $count++
         }
+        if ($env:COMPUTERNAME -like "*Revive-IM*"){
+            foreach ($tool in $RVToolsIM.Values) {
+                $bar =     "    | ][ |     : Press '$count' to ' "+ $tool
+                Write-Host $bar
+                $count++
+            }
+        }            
         Write-Host "    | ][ |     : Press 'Q' to Close  "
         Write-Host "  .'  __   ."
         Write-Host "  |  /  \  |"
