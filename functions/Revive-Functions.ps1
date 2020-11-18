@@ -26,7 +26,7 @@ Function Show-Menu{
         Write-Host $bar
         $count++
         }
-        if ($env:COMPUTERNAME -like "*Revive-IM*"){
+        if (($env:COMPUTERNAME -like "*Revive-IM*") -or ($env:COMPUTERNAME -like "*Revive-TEST*")){
             foreach ($tool in $RVToolsIM.Values) {
                 $bar =     "    | ][ |     : Press '$count' to ' "+ $tool
                 Write-Host $bar
