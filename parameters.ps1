@@ -17,7 +17,7 @@
 
         Version = "3.0.3"  
 
-        Exclusions = "Old Chains","spf.tmp","bitmap","OldChains"
+        Exclusions = "Old Chains","spf.tmp","bitmap","OldChains","Incrementals"
            
         IMLogQuerry = "Collapse Daily Exception: Monthly collapse aborted due to verification status of the following files: ReverifyQueued :"
 }

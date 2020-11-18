@@ -613,50 +613,80 @@ Function RTVerifyChain {
     
 }
 
-function RTVerifyIM {
-    param (
-        [string[]]
-        $Exclusions
+#Borrowed From Britt.
+#Its Just too fast to not use.
+#Just added exclusions for OldChains
+function Get-DirectorySizes {
+    [CmdletBinding()]
+    param(
+      [Parameter(Position = 0, Mandatory = $True, ValueFromPipeline = $True)]
+      [string]$Path
+  
     )
-    $CMD = Find-ImagePath
-    $RVVerifyIMarg1 = "v"
-    
-    #Collect MD5 Files 
-    $test = Get-ChildItem -Path "c:\Program Files (x86)\StorageCraft\ImageManager\Logs" | Get-Content | Where-Object {$_ -like "*Error*"}
-
-    <#
-    foreach ($file in $files){
-
-        #Echo
-        $out = "[" + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 3 ] + " \ " + $file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 2 ]+ " \ " +$file.FullName.Split('\')[ $file.FullName.Split('\').COUNT - 1 ]+"]" 
-        Write-Host $out -ForegroundColor Cyan
-        
-        #Run Verify Comand
-        $imageReturn = & $CMD $RVVerifyIMarg1 $file.FullName 
-
-        if ($imageReturn){
-            #Identify Success or failure.
-            if ($imageReturn[2].IndexOf("SUCCESS.") -eq 0){
-                Write-Host "     [MD5 Good]" -ForegroundColor Green
-            }else{
-                Write-Host "     [MD5 Bad]" -ForegroundColor Red
+  
+    #C# is much better at searching directories to get totals
+    $Source = @"
+    using System;
+  using System.IO;
+      
+  namespace Fast
+  {
+    public static class Size
+    {
+      public static long CalculateDirectorySize(DirectoryInfo directory, bool includeSubdirectories) {
+        long totalSize = 0;
+  
+        try { 
+          FileInfo[] files = directory.GetFiles();
+          foreach (FileInfo file in files) {
+            try { totalSize += file.Length; } catch {}
+          }
+        } catch {}
+        if (includeSubdirectories) {
+          try { 
+            DirectoryInfo[] dirs = directory.GetDirectories();
+            foreach (DirectoryInfo dir in dirs) {
+              try { totalSize += CalculateDirectorySize(dir, true); } catch {}
             }
+          } catch {}
         }
-        
+        return totalSize;
+      } 
     }
-    #>
+  }
+"@
+    try {
+      if (-not ([System.Management.Automation.PSTypeName]'Fast.Size').Type) {
+        Add-Type -ReferencedAssemblies $Assem -TypeDefinition $Source -Language CSharp
+      }
     
-
-
-    
-
+      $Exclusions = @("C:\Users", "C:\Windows", "C:\Windows\WinSxS", "C:\Windows\System32", "C:\Windows\System", "C:\Program Files", "C:\Program Files (x86)", "C:\Windows\SysWOW64", "C:\Windows\servicing", "C:\Windows\assembly", "E:\System Volume Information","OldChains","Old Chains")
+      $Return = Get-ChildItem $Path -Directory -Recurse -ErrorAction "SilentlyContinue" | 
+      Select-Object *, @{
+        Name       = "SizeGB"
+        Expression = {
+          [Math]::Round(([Fast.Size]::CalculateDirectorySize($_, $true)) / 1GB, 2)
+        }
+      } | Where-Object { $Exclusions -notcontains $_.FullName } | Sort-Object SizeGB -Descending
+    }
+    catch { Write-Host "Error in Get-LargestDirectories" }
+  
+    $Return
 }
 
 function RTIMUsageReport {
-    param (
-        
+    param
+    (
+        [string[]]
+        $Exclusions   
     )
-    
+    $reportRoot = Select-DriveLetter
+    $FullNames = (Get-ChildItem $reportRoot -Directory -Recurse | Where-Object {$Exclusions -notcontains $_.Name } | Select-Object -Property FullName -Unique | Sort-Object -Property FullName).FullName
+    foreach ($FullName in $FullNames ){
+        $FulLName
+
+    }
+
 }
 
 function RTIMFolders{
