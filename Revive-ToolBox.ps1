@@ -80,8 +80,6 @@ Process{
                     RTVerifyChain -Exclusions $p.Exclusions -RVCMDarg1 $p.RVImageCmdArg1 -RVCMDarg3 $p.RVImageCmdArg3
               } '5' {
                     Write-Host "These are not the droids your looking for"
-              } '6' {
-                    Write-Host "These are not the droids your looking for"
               } 'AK' {
                     RTIMFolders -Exclusions $p.Exclusions
               } 'q' {

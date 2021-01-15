@@ -680,12 +680,7 @@ function RTIMUsageReport {
         [string[]]
         $Exclusions   
     )
-    $reportRoot = Select-DriveLetter
-    $FullNames = (Get-ChildItem $reportRoot -Directory -Recurse | Where-Object {$Exclusions -notcontains $_.Name } | Select-Object -Property FullName -Unique | Sort-Object -Property FullName).FullName
-    foreach ($FullName in $FullNames ){
-        $FulLName
-
-    }
+    
 
 }
 
